@@ -2,6 +2,9 @@
 const jwt = require("jsonwebtoken");
 
 function auth(req, res, next) {
+  // req → the request object
+  // res → the response object
+  // next → function to pass control to the next middleware or route
   const token = req.header("Authorization")?.replace("Bearer ", "");
   if (!token)
     return res.status(401).json({ message: "No token, authorization denied" });
