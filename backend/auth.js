@@ -42,17 +42,17 @@ async function signup({name,email,password,lat,long,role}) {
    const token= jwt.sign({id:newuser._id},secret,{expiresIn:"1hr"});
    return {token};
    }
-   
+
    
     
 async function signin({email,password}) {
     const existuser=await user.findOne({email});
-    if(!existuser) throw new Error ("User not found")
+    if(!existuser) return {error:"user not exist "}
 
         const pd=await bcrypt.compare(password,existuser.password)
-        if (!pd) throw new Error ("incorrect password");
+        if (!pd) return {error:"incorrect password"};
         const token =jwt.sign({id:existuser._id},secret,{expiresIn:"1hr"} );
         return {token};
 
 }
-module.exports={signin,signup};
+module.exports={signin,signup,user};
