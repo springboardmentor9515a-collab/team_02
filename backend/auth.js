@@ -4,6 +4,7 @@ const jwt =require("jsonwebtoken")
 const axios = require("axios");
 const Blacklist = require("./model/blacklist");
 require("dotenv").config();
+const nodemailer = require("nodemailer");
 
 const secret =process.env.jwtsecret;
 const userschema=new mongo.Schema({
@@ -12,8 +13,8 @@ const userschema=new mongo.Schema({
     password: {type:String ,required:true},
     location: {type:String ,required:true},
     role: {type:String ,enum:['Citizen',"Official"],required:true},
-    resettoken:{type:String},
-resettokenexpiry:{type:Date}
+     otp: { type: Number },
+    otpExpiry: { type: Date }
 });
 const user =mongo.model("user",userschema);
 
@@ -45,9 +46,7 @@ async function signup({name,email,password,lat,long,role}) {
    const token= jwt.sign({id:newuser._id},secret,{expiresIn:"1hr"});
    return {token};
    }
-
-   
-    
+ 
 async function signin({email,password}) {
     const existuser=await user.findOne({email});
     if(!existuser) return {error:"user not exist "}
@@ -58,30 +57,66 @@ async function signin({email,password}) {
         return {token};
 
 }
+const transporter = nodemailer.createTransport({
+    host: "smtp.sendgrid.net",
+    port: 587,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
+function generateOtp() {
+    return Math.floor(100000 + Math.random() * 900000);
+}
 
-async function resetpassword(req,res){
-    const {token}= req.params;
-    const {newpassword}=req.body;
-      if (!newpassword) return res.status(400).json({ message: "New password is required" });
-    try{
-        const decoded=jwt.verify(token,secret);
-        const euser = await user.findOne({
-            _id:decoded.id,
-            resettoken:token,
-            resettokenexpiry:{$gt:Date.now()}
-        });
-        if(!euser) return res.status(400).json({message:'invalid token'});
-        const timer= await bcrypt.genSalt(11);
-        euser.password=await bcrypt.hash(newpassword,timer);
-        euser.resettoken=undefined;
-        euser.resettokenexpiry=undefined;
-        await euser.save();
 
-        res.json({message:'Password has been reset successfully'});
+async function requestReset(req, res) {
+    const { email } = req.body;
+    const u = await user.findOne({ email });
+    if (!u) return res.status(404).json({ error: "User not found" });
 
-    }catch(err){
-        res.status(400).json({message:'invalid token '});
+    const otp = generateOtp();
+    u.otp = otp;
+    u.otpExpiry = Date.now() + 10 * 60 * 1000; 
+    await u.save();
+
+    await sendOtpEmail(email, otp);
+    res.json({ message: "OTP sent to your email" });
+}
+async function sendOtpEmail(email, otp) {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.sendgrid.net",
+    port: 587,
+    auth: {
+      user: "apikey",
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Password Reset Request",
+    html: `<p>you otp is <b>${otp}</b>. The otp is valid for 1 hour.</p>`,
+  });
+}
+
+async function resetpassword(req, res) {
+    const { email, otp, newPassword } = req.body;
+    const u = await user.findOne({ email });
+
+    if (!u || u.otp !== otp || u.otpExpiry < Date.now()) {
+        return res.status(400).json({ error: "Invalid or expired OTP" });
     }
+
+    u.password = await bcrypt.hash(newPassword, 11);
+    u.otp = undefined;
+    u.otpExpiry = undefined;
+    await u.save();
+
+    res.json({ message: "Password has been reset successfully" });
 }
 async function logout(req, res) {
   try {
@@ -98,4 +133,4 @@ async function logout(req, res) {
   }
 }
 
-module.exports={signin,signup,user,resetpassword,logout};
+module.exports={signin,signup,user,requestReset,resetpassword,logout};
