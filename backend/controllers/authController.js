@@ -1,3 +1,8 @@
+//we're using crypto-generated tokens stored in DB for password reset.
+//when user(frontend) click forgot-password, it will send email with crypto-token
+// crypto-token is stored on database and have expiry time of 60mins.
+// user can update their password by filling form
+
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
@@ -45,8 +50,7 @@ const forgotPassword = async (req, res) => {
     });
   }
 };
-
-// Add this function to your existing authController
+//reset password
 const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
@@ -99,9 +103,7 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// Export these along with your existing exports
 module.exports = {
-  // ...your existing exports (register, login, etc.)
   forgotPassword,
   resetPassword,
 };
