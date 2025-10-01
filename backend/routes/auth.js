@@ -4,6 +4,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
+const {
+  forgotPassword,
+  resetPassword,
+} = require("../controllers/authController");
 
 const router = express.Router();
 
@@ -148,5 +152,7 @@ router.post(
     }
   }
 );
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 module.exports = router;
