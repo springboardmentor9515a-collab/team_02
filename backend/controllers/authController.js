@@ -8,7 +8,6 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const { sendResetEmail } = require("../utils/sendEmail");
 
-// Add this function to your existing authController
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
