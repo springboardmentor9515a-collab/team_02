@@ -2,7 +2,7 @@ const mongo=require("mongoose")
 const bcrypt=require("bcrypt")
 const jwt =require("jsonwebtoken")
 const axios = require("axios");
-
+const Blacklist = require("./model/blacklist");
 require("dotenv").config();
 
 const secret =process.env.jwtsecret;
@@ -11,9 +11,12 @@ const userschema=new mongo.Schema({
     email: {type:String ,required:true},
     password: {type:String ,required:true},
     location: {type:String ,required:true},
-    role: {type:String ,enum:['Citizen',"Official"],required:true}
+    role: {type:String ,enum:['Citizen',"Official"],required:true},
+    resettoken:{type:String},
+resettokenexpiry:{type:Date}
 });
-const user =mongo.model("user",userschema)
+const user =mongo.model("user",userschema);
+
 
 async function city(lat,long){
 
@@ -55,4 +58,44 @@ async function signin({email,password}) {
         return {token};
 
 }
-module.exports={signin,signup,user};
+
+async function resetpassword(req,res){
+    const {token}= req.params;
+    const {newpassword}=req.body;
+      if (!newpassword) return res.status(400).json({ message: "New password is required" });
+    try{
+        const decoded=jwt.verify(token,secret);
+        const euser = await user.findOne({
+            _id:decoded.id,
+            resettoken:token,
+            resettokenexpiry:{$gt:Date.now()}
+        });
+        if(!euser) return res.status(400).json({message:'invalid token'});
+        const timer= await bcrypt.genSalt(11);
+        euser.password=await bcrypt.hash(newpassword,timer);
+        euser.resettoken=undefined;
+        euser.resettokenexpiry=undefined;
+        await euser.save();
+
+        res.json({message:'Password has been reset successfully'});
+
+    }catch(err){
+        res.status(400).json({message:'invalid token '});
+    }
+}
+async function logout(req, res) {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(400).json({ message: "Token required" });
+
+    const decode = jwt.decode(token);
+    const expiryDate = new Date(decode.exp * 1000); 
+    await Blacklist.create({ token, expiry: expiryDate });
+
+    res.json({ message: "Logged out successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Logout failed", error: err.message });
+  }
+}
+
+module.exports={signin,signup,user,resetpassword,logout};
