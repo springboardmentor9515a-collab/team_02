@@ -2,7 +2,7 @@ const mongo=require("mongoose")
 const bcrypt=require("bcrypt")
 const jwt =require("jsonwebtoken")
 const express=require("express")
-const {signin,signup,user,sendResetEmail,resetpassword,logout}= require("./auth")
+const {signin,signup,user,requestReset,resetpassword,logout}= require("./auth")
 const bodyParser = require("body-parser")
 require("dotenv").config();
 const path = require("path");
@@ -42,18 +42,24 @@ route.post("/signin",async(req ,res )=>{
     res.status(400).json({ error: "Try again later" }); 
   }
 });
-route.post("/requestreset",async(req,res)=>{
-  const {email}= req.body;
-  const etuser=await user.findOne({email});
-  if(!etuser) return res.status(400).json({message:"user not found"});
-  const token =jwt.sign({id:etuser._id},secret,{expiresIn:"1hr"});
-  etuser.resettoken=token;
-  etuser.resettokenexpiry=Date.now()+3600000;
-  
-  await etuser.save();
-  res.json({message:"reset token generated",token});
-})
-route.put("/resetpassword/:token",resetpassword);
+route.post("/requestreset", async (req, res) => {
+    try {
+        await requestReset(req, res); 
+    } catch (err) {
+        console.error("Request reset error:", err);
+        res.status(500).json({ error: "Failed to send OTP" });
+    }
+});
+
+
+route.post("/resetpassword", async (req, res) => {
+    try {
+        await resetpassword(req, res); 
+    } catch (err) {
+        console.error("Reset password error:", err);
+        res.status(500).json({ error: "Failed to reset password" });
+    }
+});
 
 route.get("/dashboard",verifyUser,async(req,res)=>{
     try {
