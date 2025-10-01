@@ -1,5 +1,6 @@
 const jwt =require("jsonwebtoken");
 require("dotenv").config();
+const Blacklist = require("../model/blacklist"); 
 const secret =process.env.jwtsecret;
 
 async function verifyuser(req,res,next){
