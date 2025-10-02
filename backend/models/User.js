@@ -1,4 +1,4 @@
-// models/User.js - User database schema in mongoDB
+// User database schema in mongoDB
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({

@@ -1,4 +1,4 @@
-// server.js - Main server file with auth
+//Main server file
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");

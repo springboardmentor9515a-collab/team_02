@@ -1,4 +1,4 @@
-// routes/auth.js - Authentication routes
+//  Authentication routes
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -132,7 +132,7 @@ router.post(
       };
 
       const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: "24h",
+        expiresIn: "1h",
       });
 
       res.json({
