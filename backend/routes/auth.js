@@ -4,10 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
-const {
-  forgotPassword,
-  resetPassword,
-} = require("../controllers/authController");
+const { forgotPassword, resetPassword } = require("../utils/sendEmail");
 
 const router = express.Router();
 
