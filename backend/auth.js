@@ -17,8 +17,6 @@ const userschema = new mongo.Schema({
   password: { type: String, required: true },
   location: { type: String, required: true },
   role: { type: String, enum: ["Citizen", "Official"], required: true },
-  otp: { type: Number },
-  otpExpiry: { type: Date },
   resetToken: { type: String },
   resetTokenExpiry: { type: Date },
 });
@@ -263,3 +261,4 @@ module.exports = {
   resetpassword,
   logout,
 };
+
