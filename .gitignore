@@ -1,0 +1,17 @@
+# Node modules (ignore for all subfolders)
+node_modules/
+
+# Environment files
+.env
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+
+# OS / IDE junk
+.DS_Store
+Thumbs.db
+.vscode/
