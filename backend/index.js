@@ -3,6 +3,11 @@ const mongo = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const express = require("express");
+
+const router = express.Router();
+const { protect, authorize } = require("./middleware/auth");
+const complaintController = require("./controllers/complaintController");
+
 const {
   signin,
   signup,
@@ -106,6 +111,46 @@ route.delete("/deleteuser", verifyUser, async (req, res) => {
 });
 
 route.post("/logout", logout);
+
+// POST /complaints → Citizen submits new complaint
+router.post(
+  "/complaints",
+  protect,
+  authorize("citizen"),
+  complaintController.createComplaint
+);
+
+// GET /complaints → Admin fetches all complaints with filters
+router.get(
+  "/complaints",
+  protect,
+  authorize("admin", "official"),
+  complaintController.getAllComplaints
+);
+
+// PUT /complaints/:id/assign → Admin assigns complaint
+router.put(
+  "/complaints/:id/assign",
+  protect,
+  authorize("admin", "official"),
+  complaintController.assignComplaint
+);
+
+// GET /volunteers/me/complaints → Volunteer fetches assigned complaints
+router.get(
+  "/volunteers/me/complaints",
+  protect,
+  authorize("volunteer"),
+  complaintController.getVolunteerComplaints
+);
+
+// PUT /complaints/:id/status → Volunteer updates complaint status
+router.put(
+  "/complaints/:id/status",
+  protect,
+  authorize("volunteer"),
+  complaintController.updateComplaintStatus
+);
 
 const PORT = process.env.PORT || 5000;
 route.listen(PORT, () =>
