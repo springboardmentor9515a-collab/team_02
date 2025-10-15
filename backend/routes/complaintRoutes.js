@@ -1,7 +1,7 @@
 // backend/routes/complaints.js
 const express = require("express");
 const router = express.Router();
-const { protect, authorize } = require("../middleware/auth"); // JWT and role checks
+const { protect, authorize } = require("../middleware/authmiddleware"); // JWT and role checks
 const complaintController = require("../controllers/complaintController");
 
 router.post(
@@ -26,8 +26,9 @@ router.get(
   "/volunteers/me/complaints",
   protect,
   authorize("volunteer"),
-  complaintController.getAssignedComplaints
+  complaintController.getVolunteerComplaints
 );
+
 router.put(
   "/:id/status",
   protect,

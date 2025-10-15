@@ -7,21 +7,10 @@ const crypto = require("crypto");
 const Blacklist = require("./model/blacklist");
 require("dotenv").config();
 const nodemailer = require("nodemailer");
+const User = require("./model/User");
 
 const secret = process.env.jwtsecret;
 if (!secret) throw new Error("JWT secret is not defined");
-
-const userschema = new mongo.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, lowercase: true, trim: true },
-  password: { type: String, required: true },
-  location: { type: String, required: true },
-  role: { type: String, enum: ["Citizen", "Official"], required: true },
-  resetToken: { type: String },
-  resetTokenExpiry: { type: Date },
-});
-
-const User = mongo.model("User", userschema);
 
 // Safe reverse geocoding - guard address existence
 async function city(lat, long) {
@@ -261,4 +250,3 @@ module.exports = {
   resetpassword,
   logout,
 };
-
