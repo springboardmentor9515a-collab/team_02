@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-size: 16px;
+    --background: 45 78% 90%;      /* Custom: Light Sandal */
+    --foreground: 27 42% 25%;      /* civix-dark-brown */
+    --card: 0 0% 100%;             /* White for cards */
+    --card-foreground: 27 42% 25%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 27 42% 25%;
+    --primary: 122 39% 49%;        /* civix-civic-green */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 42 56% 85%;       /* civix-warm-beige */
+    --secondary-foreground: 27 42% 25%;
+    --muted: 220 13% 91%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 46%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 42 56% 85%;
+    --input: 42 56% 85%;
+    --ring: 122 39% 49%;
+    --radius: 0.75rem;
+    
+    /* Custom Civix Colors (not used by shadcn directly but good for custom components) */
+    --civix-sandal: #F5DEB3;
+    --civix-warm-beige: #EAD8C0;
+    --civix-dark-brown: #5A3825;
+    --civix-civic-green: #4CAF50;
+  }
+ 
+  .dark {
+    --background: 27 42% 15%;      /* Darker version of dark-brown */
+    --foreground: 45 78% 83%;      /* civix-sandal */
+    --card: 27 42% 18%;
+    --card-foreground: 45 78% 83%;
+    --popover: 27 42% 15%;
+    --popover-foreground: 45 78% 83%;
+    --primary: 122 39% 49%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 27 42% 25%;
+    --secondary-foreground: 45 78% 83%;
+    --muted: 27 42% 25%;
+    --muted-foreground: 45 78% 70%;
+    --accent: 27 42% 25%;
+    --accent-foreground: 45 78% 83%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 27 42% 25%;
+    --input: 27 42% 25%;
+    --ring: 122 39% 49%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
