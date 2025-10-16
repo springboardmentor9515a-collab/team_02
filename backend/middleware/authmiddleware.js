@@ -3,7 +3,7 @@ require("dotenv").config();
 const Blacklist = require("../model/blacklist"); 
 const secret =process.env.jwtsecret;
 
-async function verifyuser(req,res,next){
+async function verifyUser(req,res,next){
     const header= req.headers["authorization"];
     if(!header) throw new Error("No token received");
 
@@ -19,4 +19,4 @@ async function verifyuser(req,res,next){
   });
 
 }
-module.exports=verifyuser;
+module.exports=verifyUser;
