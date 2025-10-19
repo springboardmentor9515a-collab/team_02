@@ -2,20 +2,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import React, { useState } from "react";
-import { Page } from '../../App';
+import { Page, UserData } from '@/types'; // Correctly import UserData
+
+// FIXED: Added onSignUp to the component's expected props
 interface SignUpPageProps {
   onNavigate: (page: Page) => void;
+  onSignUp: (user: UserData) => void; 
 }
 
-export default function SignUpPage({ onNavigate }: SignUpPageProps) {
+export default function SignUpPage({ onNavigate, onSignUp }: SignUpPageProps) {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -23,8 +27,19 @@ export default function SignUpPage({ onNavigate }: SignUpPageProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Sign up form submitted:', formData);
-    onNavigate('dashboard');
+    // Basic validation
+    if (formData.password !== formData.confirmPassword) {
+      // In a real app, you would use a toast notification here
+      alert("Passwords do not match!");
+      return;
+    }
+    
+    // FIXED: Call the onSignUp function passed from App.tsx
+    // This passes the user data up to the main App component.
+    onSignUp({
+        fullName: formData.fullName,
+        email: formData.email,
+    });
   };
 
   return (
@@ -65,13 +80,23 @@ export default function SignUpPage({ onNavigate }: SignUpPageProps) {
                     <Input id="email" name="email" type="email" placeholder="Enter your email" value={formData.email} onChange={handleInputChange} required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-civix-dark-brown">Password</Label>
-                    <Input id="password" name="password" type="password" placeholder="Create a password" value={formData.password} onChange={handleInputChange} required />
+                    <Label htmlFor="password" className="text-civix-dark-brown">Create Password</Label>
+                    <div className="relative">
+                      <Input id="password" name="password" type={showPassword ? "text" : "password"} placeholder="Create a password" value={formData.password} onChange={handleInputChange} required />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
                   </div>
                    <div className="space-y-2">
                     <Label htmlFor="confirmPassword" className="text-civix-dark-brown">Confirm Password</Label>
-                    <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm your password" value={formData.confirmPassword} onChange={handleInputChange} required />
-                  </div>
+                     <div className="relative">
+                      <Input id="confirmPassword" name="confirmPassword" type={showPassword ? "text" : "password"} placeholder="Confirm your password" value={formData.confirmPassword} onChange={handleInputChange} required />
+                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                   </div>
                   <Button type="submit" className="w-full bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white py-6 text-lg hover:opacity-90 transition-opacity" style={{ fontWeight: '600' }}>
                     Sign Up
                   </Button>
@@ -92,4 +117,3 @@ export default function SignUpPage({ onNavigate }: SignUpPageProps) {
     </div>
   );
 }
-

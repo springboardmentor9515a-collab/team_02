@@ -1,9 +1,9 @@
-import React from 'react';
-import { Page } from '@/App';
+import React, { useState } from 'react';
+import { Page } from '@/types';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, FileText, Vote, BarChart3, MessageSquare, Bell, LogOut } from "lucide-react";
+import { Home, FileText, Vote, BarChart3, MessageSquare, Bell, LogOut, Menu, X } from "lucide-react";
 import ThemeToggle from "@/components/pages/ThemeToggle";
 
 
@@ -14,6 +14,7 @@ interface SharedLayoutProps {
 }
 
 const SharedLayout: React.FC<SharedLayoutProps> = ({ children, activePage, onNavigate }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, page: 'dashboard' as Page },
     { id: 'petitions', label: 'My Petitions', icon: FileText, page: 'petitions' as Page },
@@ -23,7 +24,7 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children, activePage, onNav
   ];
 
   return (
-    <div className="min-h-screen bg-civix-sandal dark:bg-gray-900">
+    <div className="min-h-screen bg-civix-sandal dark:bg-gray-900 text-civix-dark-brown dark:text-civix-sandal">
       {/* Header */}
       <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-civix-warm-beige dark:border-gray-700 shadow-sm sticky top-0 z-40">
         <div className="max-w-screen-xl mx-auto px-6 py-3">
@@ -60,16 +61,46 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children, activePage, onNav
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => onNavigate('landing')}><LogOut className="w-5 h-5 text-civix-dark-brown dark:text-civix-sandal" /></Button>
               </div>
+              <div className="md:hidden">
+                <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                  {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white dark:bg-gray-800 border-t border-civix-warm-beige dark:border-gray-700">
+            <nav className="flex flex-col p-4 space-y-2">
+              {sidebarItems.map(item => (
+                <Button
+                  key={item.id}
+                  variant={activePage === item.page ? "secondary" : "ghost"}
+                  className={`w-full justify-start text-base p-4 ${
+                    activePage === item.page 
+                      ? "bg-civix-civic-green text-white" 
+                      : "text-civix-dark-brown dark:text-civix-sandal"
+                  }`}
+                  onClick={() => {
+                    onNavigate(item.page);
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  {item.label}
+                </Button>
+              ))}
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Main Content with Sidebar */}
       <div className="max-w-screen-xl mx-auto px-6 py-8">
         <div className="grid lg:grid-cols-12 gap-8">
           {/* Left Sidebar */}
-          <div className="lg:col-span-3">
+          <div className="hidden lg:block lg:col-span-3">
             <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg">
               <CardContent className="p-4">
                 <nav className="space-y-1">
@@ -104,4 +135,3 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children, activePage, onNav
 };
 
 export default SharedLayout;
-
