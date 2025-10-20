@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const ComplaintSchema = new mongoose.Schema(
@@ -8,6 +7,13 @@ const ComplaintSchema = new mongoose.Schema(
     category: { type: String, index: true, required: true },
     photo_url: { type: String },
     location: { type: String, required: true },
+
+    raised_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
+      unique: true
+    },
     assigned_to: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Volunteer",
