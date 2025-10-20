@@ -13,16 +13,13 @@ router.get("/assignedcomplaints", verifyUser, async (req, res) => {
     if (!currentUser) {
       return res.status(404).json({ message: "User not found." });
     }
-
     const volunteer = await Volunteer.findOne({ email: currentUser.email });
     if (!volunteer) {
       return res.status(404).json({ message: "Volunteer not found." });
     }
-
     const complaints = await Complaint.find({ assigned_to: volunteer._id })
       .sort({ createdAt: -1 });
 
-    // Step 4: Return results
     res.status(200).json({ total: complaints.length, complaints });
   } catch (err) {
     res.status(500).json({ message: "Error fetching complaints", error: err.message });
@@ -72,17 +69,27 @@ router.post("/create-complaint", verifyUser, async (req, res) => {
       return res.status(400).json({ message: "Please provide all required fields." });
     }
 
-    const currentUser = await Volunteer.findOne({ email: req.userEmail });
+     const currentUser = await user.findById(req.userid);
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+     const existingComplaint = await Complaint.findOne({ "raised_by": currentUser._id });
+    if (existingComplaint) {
+      return res.status(400).json({
+        message: "You have already raised a complaint. You can only raise one complaint."
+      });
+    }
 
     const complaint = new Complaint({
       title,
       description,
       category,
       location,
-      assigned_to: currentUser ? currentUser._id : undefined,
-      photo_url
+      photo_url,
+      raised_by: currentUser._id, 
+      status: "received"
     });
-
     await complaint.save();
 
     res.status(201).json({ message: "Complaint created successfully", complaint });
