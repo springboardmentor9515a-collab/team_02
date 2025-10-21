@@ -1,6 +1,6 @@
 // auth.js
 const mongo = require("mongoose");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const crypto = require("crypto");
@@ -10,7 +10,6 @@ const nodemailer = require("nodemailer");
 const User = require("./model/User");
 
 const secret = process.env.jwtsecret;
-if (!secret) throw new Error("JWT secret is not defined");
 
 // Safe reverse geocoding - guard address existence
 async function city(lat, long) {
@@ -43,10 +42,13 @@ async function signup({ name, email, password, lat, long, role }) {
     email: email.toLowerCase(),
     password: hashpd,
     location: cityname,
-    role,
+    role: role,
   });
   await newuser.save();
-  const token = jwt.sign({ id: newuser._id }, secret, { expiresIn: "1h" });
+  // include role in the JWT payload; use proper jwt.sign signature
+  const token = jwt.sign({ id: newuser._id, role: newuser.role }, secret, {
+    expiresIn: "3h",
+  });
   return { token };
 }
 
@@ -58,18 +60,23 @@ async function signin({ email, password }) {
 
   const pd = await bcrypt.compare(password, existuser.password);
   if (!pd) return { error: "incorrect password" };
-  const token = jwt.sign({ id: existuser._id }, secret, { expiresIn: "1h" });
+  const token = jwt.sign({ id: existuser._id, role: existuser.role }, secret, {
+    expiresIn: "3h",
+  });
   return { token };
 }
 
-// Nodemailer transporter - make sure EMAIL_USER and EMAIL_PASS are valid
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // should be an app password or OAuth token
-  },
-});
+// Nodemailer transporter - use JSON transport in development to avoid real email
+const transporter =
+  process.env.NODE_ENV === "development"
+    ? nodemailer.createTransport({ jsonTransport: true })
+    : nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS, // should be an app password or OAuth token
+        },
+      });
 
 const sendResetEmail = async (userEmail, userName, resetToken) => {
   const resetLink = `${
@@ -138,7 +145,6 @@ const requestReset = async (req, res) => {
 
     const foundUser = await User.findOne({ email: email.toLowerCase() });
 
-    // Always respond with success message to avoid revealing account existence
     if (!foundUser) {
       return res.status(200).json({
         success: true,

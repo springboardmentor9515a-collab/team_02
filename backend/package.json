@@ -13,9 +13,10 @@
   "description": "",
   "dependencies": {
     "axios": "^1.12.2",
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^2.4.3",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
+    "curl": "^0.1.4",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",

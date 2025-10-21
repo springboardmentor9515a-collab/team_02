@@ -1,9 +1,6 @@
-const Complaint = require("../model/Complaint");
+const Complaint = require("../model/complaint");
 const { uploadImage } = require("../utils/cloudinary");
-const {
-  sendComplaintConfirmation,
-  notifyVolunteerAssignment,
-} = require("../utils/notifications");
+const { notifyVolunteerAssignment } = require("../utils/notifications");
 const { validationResult } = require("express-validator");
 
 exports.createComplaint = async (req, res) => {
@@ -27,7 +24,6 @@ exports.createComplaint = async (req, res) => {
     status: "received",
   });
   await complaint.save();
-  await sendComplaintConfirmation(req.user.email, complaint._id); // notification
   res.json(complaint);
 };
 
