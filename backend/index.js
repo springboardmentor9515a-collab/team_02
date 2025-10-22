@@ -27,6 +27,10 @@ const authRoutes = require("./routes/authRoutes");
 // Auth routes
 app.use("/api/auth", authRoutes);
 
+// User routes (admin operations)
+const userRoutes = require("./routes/userRoutes");
+app.use("/api/users", userRoutes);
+
 // Test route — this must have a valid function as 2nd argument
 app.get("/", (req, res) => {
   res.send("Server is running ✅");

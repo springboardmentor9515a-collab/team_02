@@ -63,7 +63,15 @@ async function signin({ email, password }) {
   const token = jwt.sign({ id: existuser._id, role: existuser.role }, secret, {
     expiresIn: "3h",
   });
-  return { token };
+  // return token and basic user info for frontend convenience
+  return {
+    token,
+    user: {
+      fullName: existuser.name,
+      email: existuser.email,
+      role: existuser.role,
+    },
+  };
 }
 
 // Nodemailer transporter - use JSON transport in development to avoid real email

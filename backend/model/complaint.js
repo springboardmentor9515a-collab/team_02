@@ -8,9 +8,15 @@ const ComplaintSchema = new mongoose.Schema(
     category: { type: String, index: true, required: true },
     photo_url: { type: String },
     location: { type: String, required: true },
+    created_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     assigned_to: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Volunteer",
+      ref: "User",
       index: true,
     },
     status: {
