@@ -7,17 +7,7 @@ require("dotenv").config();
 const nodemailer = require("nodemailer");
 
 const secret =process.env.jwtsecret;
-const userschema=new mongo.Schema({
-    name: {type:String ,required:true},
-    email: {type:String ,required:true},
-    password: {type:String ,required:true},
-    location: {type:String ,required:true},
-    role: {type:String ,enum:['Citizen','volunteer',"Official"],required:true},
-     otp: { type: Number },
-    otpExpiry: { type: Date }
-});
-const user =mongo.model("user",userschema);
-
+const user= require("./model/user")
 
 async function city(lat,long){
 
@@ -133,4 +123,4 @@ async function logout(req, res) {
   }
 }
 
-module.exports={signin,signup,user,requestReset,sendEmail,resetpassword,logout};
+module.exports={signin,signup,requestReset,sendEmail,resetpassword,logout};
