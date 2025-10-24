@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const {user:user} = require("../auth");
+const user= require("../model/user")
 const Volunteer = require("../model/volunteer");
 const Complaint = require("../model/complaint");
 
-const verifyUser = require("../middleware/authmiddleware");
+const {verifyUser} = require("../middleware/authmiddleware");
 const verifyOfficial = require("../middleware/verifyofficial"); 
 
 router.get("/assignedcomplaints", verifyUser, async (req, res) => {
