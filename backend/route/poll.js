@@ -7,7 +7,7 @@ const verifyOfficial = require("../middleware/verifyofficial");
 
 const router = express.Router();
 
-// ✅ Create Poll (Admin/Official)
+//  Create Poll (Admin/Official)
 router.post("/cpoll", verifyUser, verifyOfficial, async (req, res) => {
   try {
     const { title, description, category, options, target_location, duration } = req.body;
@@ -37,7 +37,7 @@ router.post("/cpoll", verifyUser, verifyOfficial, async (req, res) => {
   }
 });
 
-// ✅ Get all Polls (filter by location)
+//  Get all Polls (filter by location)
 router.get("/poll", verifyUser, async (req, res) => {
   try {
     const currentUser = await User.findById(req.userid);
@@ -55,7 +55,7 @@ router.get("/poll", verifyUser, async (req, res) => {
   }
 });
 
-// ✅ Vote on Poll
+//  Vote on Poll
 router.post("/:id/vote", verifyUser, async (req, res) => {
   try {
     const currentUser = await User.findById(req.userid);
@@ -88,7 +88,7 @@ router.post("/:id/vote", verifyUser, async (req, res) => {
   }
 });
 
-// ✅ Get Poll Results (aggregated)
+//  Get Poll Results (aggregated)
 router.get("/:id/results", verifyUser, async (req, res) => {
   try {
     const currentUser = await User.findById(req.userid);
