@@ -2,7 +2,8 @@ const mongo=require("mongoose")
 const bcrypt=require("bcrypt")
 const jwt =require("jsonwebtoken")
 const express=require("express")
-const {signin,signup,user,requestReset,sendEmail,resetpassword,logout}= require("./auth")
+const {signin,signup,requestReset,resetpassword,logout}= require("./auth")
+const user= require("./model/user")
 const bodyParser = require("body-parser")
 require("dotenv").config();
 const path = require("path");
@@ -10,13 +11,14 @@ const cors = require("cors");
 const route =express();
 const Blacklist = require("./model/blacklist");
 route.use(cors());
-const verifyUser = require("./middleware/authmiddleware");
+const {verifyUser} = require("./middleware/authmiddleware");
 const { error } = require("console")
 route.use(express.json());
 const Volunteer = require("./model/volunteer");
 const petitionAssignment = require("./model/assignment"); 
 const complaintRoutes = require("./route/complaint");
 const  petitionRoutes=require("./route/petititon");
+const pollRoutes= require("./route/poll")
 const verifyOfficial=require("./middleware/verifyofficial")
 mongo.connect(process.env.mongourl).then(()=> console.log("mongodb connected")).
     catch(e=>console.error(e));
@@ -125,6 +127,7 @@ route.post("/volunteerregister", verifyUser, async (req, res) => {
 });
 route.use("/petition",petitionRoutes);
 route.use("/complaint", complaintRoutes);
+route.use("/polls", pollRoutes);
 
 route.post("/logout",async (req,res)=>{
    try {
