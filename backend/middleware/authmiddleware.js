@@ -18,5 +18,16 @@ async function verifyUser(req,res,next){
 
   });
 
+
 }
-module.exports=verifyUser;
+
+function verifyRole(requiredRoles) {
+  return (req, res, next) => {
+    const { role } = req.user;
+    if (!requiredRoles.includes(role)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    next();
+  };
+}
+module.exports={verifyUser,verifyRole};
