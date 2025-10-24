@@ -1,9 +1,9 @@
 
-const {user:User} = require("../auth");
+const user = require("../model/user");
 
 async function verifyOfficial(req, res, next) {
   try {
-    const currentUser = await User.findById(req.userid);
+    const currentUser = await user.findById(req.userid);
     if (!currentUser) return res.status(404).json({ message: "User not found." });
 
     if (currentUser.role !== "Official") {
