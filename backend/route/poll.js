@@ -15,7 +15,7 @@ router.post("/cpoll", verifyUser, verifyOfficial, async (req, res) => {
     if (!title || !description || !category || !options || options.length < 2 || !target_location || !duration) {
       return res.status(400).json({ message: "All fields are required and at least 2 options needed." });
     }
-    const currentUser = await User.findById(req.userid);
+    const currentUser = await user.findById(req.userid);
     if (!currentUser) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -40,7 +40,7 @@ router.post("/cpoll", verifyUser, verifyOfficial, async (req, res) => {
 //  Get all Polls (filter by location)
 router.get("/poll", verifyUser, async (req, res) => {
   try {
-    const currentUser = await User.findById(req.userid);
+    const currentUser = await user.findById(req.userid);
     if (!currentUser) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -58,7 +58,7 @@ router.get("/poll", verifyUser, async (req, res) => {
 //  Vote on Poll
 router.post("/:id/vote", verifyUser, async (req, res) => {
   try {
-    const currentUser = await User.findById(req.userid);
+    const currentUser = await user.findById(req.userid);
     if (!currentUser) return res.status(404).json({ message: "User not found." });
 
     const { id } = req.params;
@@ -91,7 +91,7 @@ router.post("/:id/vote", verifyUser, async (req, res) => {
 //  Get Poll Results (aggregated)
 router.get("/:id/results", verifyUser, async (req, res) => {
   try {
-    const currentUser = await User.findById(req.userid);
+    const currentUser = await user.findById(req.userid);
     if (!currentUser) return res.status(404).json({ message: "User not found." });
 
     const { id } = req.params;
