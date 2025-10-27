@@ -235,9 +235,10 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-12 gap-8">
+        <div className="grid lg:grid-cols-4 gap-8">
           {/* Left Sidebar */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-1 space-y-6">
+            {/* Navigation */}
             <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
               <CardContent className="p-6">
                 <nav className="space-y-2">
@@ -259,10 +260,35 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                 </nav>
               </CardContent>
             </Card>
+
+            {/* This Month Stats */}
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg text-civix-dark-brown dark:text-civix-sandal">This Month</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>147</div>
+                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Petitions Created</div>
+                  </div>
+                  <Separator />
+                  <div className="text-center">
+                    <div className="text-2xl text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '700' }}>23</div>
+                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Official Responses</div>
+                  </div>
+                  <Separator />
+                  <div className="text-center">
+                    <div className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>89%</div>
+                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Citizen Participation</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-6 space-y-8">
+          {/* Main Content - Full Width */}
+          <div className="lg:col-span-3 space-y-8">
             {/* Welcome Banner */}
             <Card className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white border-0 shadow-lg">
               <CardContent className="p-8">
@@ -271,150 +297,177 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
               </CardContent>
             </Card>
 
-            {/* Overview Cards - FIXED */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-              <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => onNavigate('petitions')}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Total Petitions</p>
-                      <p className="text-3xl text-civix-civic-green" style={{ fontWeight: '700' }}>12</p>
-                      <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">3 signed this week</p>
-                    </div>
-                    <div className="bg-civix-civic-green/10 dark:bg-civix-civic-green/20 p-3 rounded-lg shrink-0">
-                      <FileText className="w-6 h-6 text-civix-civic-green" />
+            {/* Combined Overview & Quick Actions Container */}
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl text-civix-dark-brown dark:text-civix-sandal">Overview & Quick Actions</CardTitle>
+                <CardDescription className="text-civix-dark-brown/70 dark:text-civix-sandal/70">
+                  Your activity summary and quick access to common actions
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                {/* Overview Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                  <div 
+                    className="bg-gradient-to-br from-civix-civic-green/10 to-civix-civic-green/5 dark:from-civix-civic-green/20 dark:to-civix-civic-green/10 p-6 rounded-lg border border-civix-civic-green/20 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => onNavigate('petitions')}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 space-y-1">
+                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Total Petitions</p>
+                        <p className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>12</p>
+                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">3 signed this week</p>
+                      </div>
+                      <div className="bg-civix-civic-green/20 p-2 rounded-lg shrink-0">
+                        <FileText className="w-5 h-5 text-civix-civic-green" />
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
 
-              <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => onNavigate('polls')}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Active Polls</p>
-                      <p className="text-3xl text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '700' }}>8</p>
-                      <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">2 voted today</p>
-                    </div>
-                    <div className="bg-civix-dark-brown/10 dark:bg-civix-sandal/20 p-3 rounded-lg shrink-0">
-                      <Vote className="w-6 h-6 text-civix-dark-brown dark:text-civix-sandal" />
+                  <div 
+                    className="bg-gradient-to-br from-civix-dark-brown/10 to-civix-dark-brown/5 dark:from-civix-sandal/20 dark:to-civix-sandal/10 p-6 rounded-lg border border-civix-dark-brown/20 dark:border-civix-sandal/20 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => onNavigate('polls')}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 space-y-1">
+                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Active Polls</p>
+                        <p className="text-2xl text-civix-dark-green dark:text-civix-sandal" style={{ fontWeight: '700' }}>8</p>
+                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">2 voted today</p>
+                      </div>
+                      <div className="bg-civix-dark-brown/20 dark:bg-civix-sandal/20 p-2 rounded-lg shrink-0">
+                        <Vote className="w-5 h-5 text-civix-dark-brown dark:text-civix-sandal" />
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
 
-              <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => onNavigate('complaints')}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">My Complaints</p>
-                      <p className="text-3xl text-civix-civic-green" style={{ fontWeight: '700' }}>4</p>
-                      <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">2 assigned</p>
-                    </div>
-                    <div className="bg-civix-civic-green/10 dark:bg-civix-civic-green/20 p-3 rounded-lg shrink-0">
-                      <AlertTriangle className="w-6 h-6 text-civix-civic-green" />
+                  <div 
+                    className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 dark:from-orange-500/20 dark:to-orange-500/10 p-6 rounded-lg border border-orange-500/20 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => onNavigate('complaints')}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 space-y-1">
+                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">My Complaints</p>
+                        <p className="text-2xl text-orange-500" style={{ fontWeight: '700' }}>4</p>
+                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">2 assigned</p>
+                      </div>
+                      <div className="bg-orange-500/20 p-2 rounded-lg shrink-0">
+                        <AlertTriangle className="w-5 h-5 text-orange-500" />
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
 
-              <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => onNavigate('messages')}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Messages Received</p>
-                      <p className="text-3xl text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '700' }}>4</p>
-                      <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">1 unread</p>
-                    </div>
-                    <div className="bg-civix-dark-brown/10 dark:bg-civix-sandal/20 p-3 rounded-lg shrink-0">
-                      <MessageSquare className="w-6 h-6 text-civix-dark-brown dark:text-civix-sandal" />
+                  <div 
+                    className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 dark:from-blue-500/20 dark:to-blue-500/10 p-6 rounded-lg border border-blue-500/20 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => onNavigate('messages')}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 space-y-1">
+                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Messages</p>
+                        <p className="text-2xl text-blue-500" style={{ fontWeight: '700' }}>4</p>
+                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">1 unread</p>
+                      </div>
+                      <div className="bg-blue-500/20 p-2 rounded-lg shrink-0">
+                        <MessageSquare className="w-5 h-5 text-blue-500" />
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+
+                <Separator className="my-6" />
+
+                {/* Quick Access Buttons */}
+                <div>
+                  <h4 className="text-lg text-civix-dark-brown dark:text-civix-sandal mb-4" style={{ fontWeight: '600' }}>Quick Actions</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Button 
+                      onClick={() => onNavigate('petitions')}
+                      className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
+                    >
+                      <FileText className="w-6 h-6 shrink-0" />
+                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>Create Petition</span>
+                    </Button>
+
+                    <Button 
+                      onClick={() => onNavigate('complaints')}
+                      className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
+                    >
+                      <AlertTriangle className="w-6 h-6 shrink-0" />
+                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>Submit Complaint</span>
+                    </Button>
+
+                    <Button 
+                      onClick={() => onNavigate('polls')}
+                      className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
+                    >
+                      <Vote className="w-6 h-6 shrink-0" />
+                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>Start Poll</span>
+                    </Button>
+
+                    <Button 
+                      onClick={() => onNavigate('messages')}
+                      className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
+                    >
+                      <MessageSquare className="w-6 h-6 shrink-0" />
+                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>View Messages</span>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+{/* Admin & Volunteer Access Container */}
+<Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+  <CardHeader>
+    <CardTitle className="text-2xl text-civix-dark-brown dark:text-civix-sandal">Admin & Volunteer Access</CardTitle>
+    <CardDescription className="text-civix-dark-brown/70 dark:text-civix-sandal/70">
+      Access specialized dashboards for administrative and volunteer functions
+    </CardDescription>
+  </CardHeader>
+  <CardContent className="p-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div 
+        onClick={() => onNavigate('admin')}
+        className="group bg-gradient-to-r from-civix-dark-brown to-civix-civic-green rounded-lg cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl overflow-hidden"
+      >
+        <div className="p-6">
+          <div className="flex items-center space-x-4">
+            <div className="bg-white/20 p-3 rounded-lg shrink-0 transition-all duration-300 group-hover:scale-110">
+              <Shield className="w-8 h-8 text-white transition-all duration-300" />
             </div>
-
-            {/* Quick Access Buttons - FIXED */}
-            <div>
-              <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-6" style={{ fontWeight: '700' }}>Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                <Button 
-                  onClick={() => onNavigate('petitions')}
-                  className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-6 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                >
-                  <FileText className="w-8 h-8 shrink-0" />
-                  <span className="text-lg text-center w-full" style={{ fontWeight: '600' }}>Create Petition</span>
-                  <span className="text-sm opacity-90 text-center w-full">Start a new petition</span>
-                </Button>
-
-                <Button 
-                  onClick={() => onNavigate('complaints')}
-                  className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-6 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                >
-                  <AlertTriangle className="w-8 h-8 shrink-0" />
-                  <span className="text-lg text-center w-full" style={{ fontWeight: '600' }}>Submit Complaint</span>
-                  <span className="text-sm opacity-90 text-center w-full">Report an issue</span>
-                </Button>
-
-                <Button 
-                  onClick={() => onNavigate('polls')}
-                  className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-6 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                >
-                  <Vote className="w-8 h-8 shrink-0" />
-                  <span className="text-lg text-center w-full" style={{ fontWeight: '600' }}>Start Poll</span>
-                  <span className="text-sm opacity-90 text-center w-full">Create a new poll</span>
-                </Button>
-
-                <Button 
-                  onClick={() => onNavigate('messages')}
-                  className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-6 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                >
-                  <MessageSquare className="w-8 h-8 shrink-0" />
-                  <span className="text-lg text-center w-full" style={{ fontWeight: '600' }}>View Messages</span>
-                  <span className="text-sm opacity-90 text-center w-full">Check your inbox</span>
-                </Button>
-              </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-xl text-white mb-1 transition-all duration-300 group-hover:text-2xl" style={{ fontWeight: '600' }}>
+                Admin Dashboard
+              </h4>
+              <p className="text-sm text-white/90 transition-all duration-300 group-hover:text-white">
+                Manage all complaints & assign volunteers
+              </p>
             </div>
-
-            {/* Admin & Volunteer Access */}
-<div>
-  <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-6" style={{ fontWeight: '700' }}>Admin & Volunteer Access</h3>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <Card 
-      onClick={() => onNavigate('admin')}
-      className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green border-0 shadow-lg cursor-pointer hover:opacity-90 transition-opacity overflow-hidden"
-    >
-      <CardContent className="p-6">
-        <div className="flex items-center space-x-4">
-          <div className="bg-white/20 p-3 rounded-lg shrink-0">
-            <Shield className="w-8 h-8 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="text-xl text-white mb-1" style={{ fontWeight: '600' }}>Admin Dashboard</h4>
-            <p className="text-sm text-white/90">Manage all complaints & assign volunteers</p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
 
-    <Card 
-      onClick={() => onNavigate('volunteer')}
-      className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown border-0 shadow-lg cursor-pointer hover:opacity-90 transition-opacity overflow-hidden"
-    >
-      <CardContent className="p-6">
-        <div className="flex items-center space-x-4">
-          <div className="bg-white/20 p-3 rounded-lg shrink-0">
-            <UserCheck className="w-8 h-8 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="text-xl text-white mb-1" style={{ fontWeight: '600' }}>Volunteer Dashboard</h4>
-            <p className="text-sm text-white/90">View & update assigned complaints</p>
+      <div 
+        onClick={() => onNavigate('volunteer')}
+        className="group bg-gradient-to-r from-civix-civic-green to-civix-dark-brown rounded-lg cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl overflow-hidden"
+      >
+        <div className="p-6">
+          <div className="flex items-center space-x-4">
+            <div className="bg-white/20 p-3 rounded-lg shrink-0 transition-all duration-300 group-hover:scale-110">
+              <UserCheck className="w-8 h-8 text-white transition-all duration-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-xl text-white mb-1 transition-all duration-300 group-hover:text-2xl" style={{ fontWeight: '600' }}>
+                Volunteer Dashboard
+              </h4>
+              <p className="text-sm text-white/90 transition-all duration-300 group-hover:text-white">
+                View & update assigned complaints
+              </p>
+            </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
-  </div>
-</div>
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
             {/* Volunteer Registration Section */}
             <Card className="bg-gradient-to-br from-civix-civic-green/10 to-civix-sandal/20 dark:from-civix-civic-green/20 dark:to-gray-700/50 border-2 border-civix-civic-green/30 dark:border-civix-civic-green/40 shadow-xl">
@@ -565,82 +618,6 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                 ))}
               </div>
             </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Quick Poll Widget */}
-            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg text-civix-dark-brown dark:text-civix-sandal">Quick Poll</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-civix-dark-brown/80 dark:text-civix-sandal/80 mb-4">How would you rate your city's response to citizen concerns?</p>
-                <div className="space-y-2">
-                  {['Excellent', 'Good', 'Fair', 'Poor'].map((rating) => (
-                    <Button 
-                      key={rating} 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full justify-start border-civix-warm-beige dark:border-gray-600 text-civix-dark-brown dark:text-civix-sandal hover:bg-civix-warm-beige dark:hover:bg-gray-700"
-                    >
-                      {rating}
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Trending Petitions Widget */}
-            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg text-civix-dark-brown dark:text-civix-sandal flex items-center">
-                  <TrendingUp className="w-4 h-4 mr-2 shrink-0" />
-                  Trending Now
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-2 min-w-0">
-                    <span className="text-sm text-civix-dark-brown dark:text-civix-sandal min-w-0 flex-1 truncate">Solar Panel Schools</span>
-                    <Badge className="bg-civix-civic-green text-white text-xs shrink-0">Hot</Badge>
-                  </div>
-                  <div className="flex items-start justify-between gap-2 min-w-0">
-                    <span className="text-sm text-civix-dark-brown dark:text-civix-sandal min-w-0 flex-1 truncate">Bike Lane Expansion</span>
-                    <Badge variant="outline" className="border-civix-civic-green text-civix-civic-green text-xs shrink-0">Rising</Badge>
-                  </div>
-                  <div className="flex items-start justify-between gap-2 min-w-0">
-                    <span className="text-sm text-civix-dark-brown dark:text-civix-sandal min-w-0 flex-1 truncate">Library Hours Extension</span>
-                    <Badge variant="outline" className="border-civix-warm-beige dark:border-civix-sandal text-civix-dark-brown dark:text-civix-sandal text-xs shrink-0">New</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Transparency Stats */}
-            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg text-civix-dark-brown dark:text-civix-sandal">This Month</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>147</div>
-                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Petitions Created</div>
-                  </div>
-                  <Separator />
-                  <div className="text-center">
-                    <div className="text-2xl text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '700' }}>23</div>
-                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Official Responses</div>
-                  </div>
-                  <Separator />
-                  <div className="text-center">
-                    <div className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>89%</div>
-                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Citizen Participation</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
