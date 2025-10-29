@@ -1,33 +1,44 @@
-//Complaints.tsx
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { 
-  ArrowLeft, 
-  Upload, 
-  MapPin, 
-  FileText, 
-  CheckCircle, 
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Badge } from "./ui/badge";
+import { Separator } from "./ui/separator";
+import {
+  ArrowLeft,
+  Upload,
+  MapPin,
+  FileText,
+  CheckCircle,
   Clock,
   AlertCircle,
   Image as ImageIcon,
-  X,
-  Loader2
+  X
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { toast } from "sonner";
-import { complaintsAPI, setAuthToken } from "@/lib/api";
-import { Complaint, CreateComplaintData } from "@/types";
+
 
 interface ComplaintsModuleProps {
   onNavigate: (page: 'dashboard') => void;
   userName: string;
+}
+
+interface Complaint {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  location: string;
+  latitude?: number;
+  longitude?: number;
+  photoUrl?: string;
+  status: 'pending' | 'assigned' | 'in-review' | 'resolved';
+  assignedTo?: string;
+  createdAt: string;
 }
 
 export default function ComplaintsModule({ onNavigate, userName }: ComplaintsModuleProps) {
@@ -40,29 +51,60 @@ export default function ComplaintsModule({ onNavigate, userName }: ComplaintsMod
   const [longitude, setLongitude] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
-  // Real data from API
-  const [userComplaints, setUserComplaints] = useState<Complaint[]>([]);
-
-  // Load complaints on component mount
-  useEffect(() => {
-    loadComplaints();
-  }, []);
-
-  const loadComplaints = async () => {
-    try {
-      setLoading(true);
-      const complaints = await complaintsAPI.getMyComplaints();
-      setUserComplaints(complaints);
-    } catch (error: any) {
-      console.error('Error loading complaints:', error);
-      toast.error('Failed to load complaints. Please try again.');
-    } finally {
-      setLoading(false);
+  // Mock data for user's complaints
+  const [userComplaints, setUserComplaints] = useState<Complaint[]>([
+    {
+      id: '1',
+      title: 'Broken Street Light on Main Street',
+      description: 'The street light at the corner of Main Street and 5th Avenue has been non-functional for over a week, creating safety concerns for pedestrians.',
+      category: 'Infrastructure',
+      location: 'Main Street & 5th Avenue',
+      latitude: 40.7128,
+      longitude: -74.0060,
+      photoUrl: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=400',
+      status: 'assigned',
+      assignedTo: 'John Smith',
+      createdAt: '2025-10-05'
+    },
+    {
+      id: '2',
+      title: 'Potholes on Highway 101',
+      description: 'Multiple large potholes on Highway 101 near exit 12 are causing damage to vehicles and creating hazardous driving conditions.',
+      category: 'Roads',
+      location: 'Highway 101, Exit 12',
+      latitude: 40.7580,
+      longitude: -73.9855,
+      photoUrl: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=400',
+      status: 'in-review',
+      assignedTo: 'Sarah Johnson',
+      createdAt: '2025-10-03'
+    },
+    {
+      id: '3',
+      title: 'Illegal Dumping at Park Entrance',
+      description: 'Construction debris and household waste have been illegally dumped at the entrance of Central Park, blocking pedestrian access.',
+      category: 'Environment',
+      location: 'Central Park, North Entrance',
+      latitude: 40.7812,
+      longitude: -73.9665,
+      status: 'pending',
+      createdAt: '2025-10-07'
+    },
+    {
+      id: '4',
+      title: 'Graffiti on Public Building',
+      description: 'Offensive graffiti has appeared on the exterior walls of the community center.',
+      category: 'Vandalism',
+      location: 'Community Center, Oak Street',
+      latitude: 40.7489,
+      longitude: -73.9680,
+      photoUrl: 'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=400',
+      status: 'resolved',
+      assignedTo: 'Mike Chen',
+      createdAt: '2025-09-28'
     }
-  };
+  ]);
 
   const categories = [
     'Infrastructure',
@@ -92,62 +134,54 @@ export default function ComplaintsModule({ onNavigate, userName }: ComplaintsMod
     setPreviewUrl(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title || !description || !category || !location) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    try {
-      setSubmitting(true);
-      
-      const complaintData: CreateComplaintData = {
-        title,
-        description,
-        category,
-        location,
-        latitude: latitude ? parseFloat(latitude) : undefined,
-        longitude: longitude ? parseFloat(longitude) : undefined,
-      };
+    // In a real app, this would upload to Cloudinary/S3 and get photo_url
+    const newComplaint: Complaint = {
+      id: Date.now().toString(),
+      title,
+      description,
+      category,
+      location,
+      latitude: latitude ? parseFloat(latitude) : undefined,
+      longitude: longitude ? parseFloat(longitude) : undefined,
+      photoUrl: previewUrl || undefined,
+      status: 'pending',
+      createdAt: new Date().toISOString().split('T')[0]
+    };
 
-  const newComplaint = await complaintsAPI.createComplaint(complaintData, uploadedFile || undefined);
+    setUserComplaints([newComplaint, ...userComplaints]);
 
-  // Refresh user's complaints from server to ensure consistent state
-  const refreshed = await complaintsAPI.getMyComplaints();
-  setUserComplaints(refreshed);
-      
-      // Reset form
-      setTitle('');
-      setDescription('');
-      setCategory('');
-      setLocation('');
-      setLatitude('');
-      setLongitude('');
-      setUploadedFile(null);
-      setPreviewUrl(null);
-      
-      toast.success('Complaint submitted successfully!');
-      setView('list');
-    } catch (error: any) {
-      console.error('Error submitting complaint:', error);
-      toast.error(error.response?.data?.message || 'Failed to submit complaint. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+    // Reset form
+    setTitle('');
+    setDescription('');
+    setCategory('');
+    setLocation('');
+    setLatitude('');
+    setLongitude('');
+    setUploadedFile(null);
+    setPreviewUrl(null);
+
+    toast.success('Complaint submitted successfully!');
+    setView('list');
   };
 
   const getStatusBadge = (status: Complaint['status']) => {
     switch (status) {
-      case 'received':
-        return <Badge variant="outline" className="border-yellow-500 text-yellow-600 dark:text-yellow-400"><Clock className="w-3 h-3 mr-1" />Received</Badge>;
-      case 'in_review':
+      case 'pending':
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-600 dark:text-yellow-400"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+      case 'assigned':
+        return <Badge variant="outline" className="border-blue-500 text-blue-600 dark:text-blue-400"><AlertCircle className="w-3 h-3 mr-1" />Assigned</Badge>;
+      case 'in-review':
         return <Badge variant="outline" className="border-orange-500 text-orange-600 dark:text-orange-400"><FileText className="w-3 h-3 mr-1" />In Review</Badge>;
       case 'resolved':
         return <Badge variant="outline" className="border-civix-civic-green text-civix-civic-green"><CheckCircle className="w-3 h-3 mr-1" />Resolved</Badge>;
-      default:
-        return <Badge variant="outline" className="border-gray-500 text-gray-600 dark:text-gray-400"><Clock className="w-3 h-3 mr-1" />Unknown</Badge>;
     }
   };
 
@@ -183,8 +217,8 @@ export default function ComplaintsModule({ onNavigate, userName }: ComplaintsMod
             <Button
               variant={view === 'list' ? 'default' : 'outline'}
               onClick={() => setView('list')}
-              className={view === 'list' 
-                ? 'bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white' 
+              className={view === 'list'
+                ? 'bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white'
                 : 'border-civix-warm-beige dark:border-gray-600 text-civix-dark-brown dark:text-civix-sandal'}
             >
               <FileText className="w-4 h-4 mr-2" />
@@ -193,8 +227,8 @@ export default function ComplaintsModule({ onNavigate, userName }: ComplaintsMod
             <Button
               variant={view === 'new' ? 'default' : 'outline'}
               onClick={() => setView('new')}
-              className={view === 'new' 
-                ? 'bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white' 
+              className={view === 'new'
+                ? 'bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white'
                 : 'border-civix-warm-beige dark:border-gray-600 text-civix-dark-brown dark:text-civix-sandal'}
             >
               <Upload className="w-4 h-4 mr-2" />
@@ -206,17 +240,7 @@ export default function ComplaintsModule({ onNavigate, userName }: ComplaintsMod
         {view === 'list' ? (
           /* List View */
           <div className="space-y-6">
-            {loading ? (
-              <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-                <CardContent className="p-12 text-center">
-                  <Loader2 className="w-16 h-16 mx-auto mb-4 text-civix-dark-brown/30 dark:text-civix-sandal/30 animate-spin" />
-                  <h3 className="text-xl text-civix-dark-brown dark:text-civix-sandal mb-2" style={{ fontWeight: '600' }}>Loading Complaints...</h3>
-                  <p className="text-civix-dark-brown/70 dark:text-civix-sandal/70">
-                    Please wait while we fetch your complaints.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : userComplaints.length === 0 ? (
+            {userComplaints.length === 0 ? (
               <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-12 text-center">
                   <FileText className="w-16 h-16 mx-auto mb-4 text-civix-dark-brown/30 dark:text-civix-sandal/30" />
@@ -234,16 +258,15 @@ export default function ComplaintsModule({ onNavigate, userName }: ComplaintsMod
               </Card>
             ) : (
               userComplaints.map((complaint) => (
-                <Card key={complaint._id} className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow">
+                <Card key={complaint.id} className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row gap-6">
                       {/* Photo */}
-                      {complaint.photo_url && (
+                      {complaint.photoUrl && (
                         <div className="md:w-48 h-48 rounded-lg overflow-hidden bg-civix-warm-beige dark:bg-gray-700 flex-shrink-0">
                           <img
-                            src={complaint.photo_url}
+                            src={complaint.photoUrl}
                             alt={complaint.title}
-                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -274,16 +297,19 @@ export default function ComplaintsModule({ onNavigate, userName }: ComplaintsMod
                             <MapPin className="w-4 h-4 mr-1" />
                             {complaint.location}
                           </div>
+                          {complaint.latitude && complaint.longitude && (
+                            <div className="text-xs">
+                              Lat: {complaint.latitude.toFixed(4)}, Long: {complaint.longitude.toFixed(4)}
+                            </div>
+                          )}
                           <div>
                             Submitted: {new Date(complaint.createdAt).toLocaleDateString()}
                           </div>
-                          {complaint.assigned_to && (
+                          {complaint.assignedTo && (
                             <div className="flex items-center">
                               <span className="mr-2">Assigned to:</span>
                               <Badge className="bg-civix-civic-green text-white">
-                                {typeof complaint.assigned_to === 'string'
-                                  ? complaint.assigned_to
-                                  : complaint.assigned_to.name || 'Volunteer'}
+                                {complaint.assignedTo}
                               </Badge>
                             </div>
                           )}
@@ -360,54 +386,83 @@ export default function ComplaintsModule({ onNavigate, userName }: ComplaintsMod
                   <Label htmlFor="location" className="text-civix-dark-brown dark:text-civix-sandal">
                     Location *
                   </Label>
-                  <Input
-                    id="location"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Street address or landmark"
-                    className="border-civix-warm-beige dark:border-gray-600"
-                    required
-                  />
+
+                  <div className="flex space-x-2">
+                    <Input
+                      id="location"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="Enter or detect your location"
+                      className="border-civix-warm-beige dark:border-gray-600 flex-1"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white"
+                      onClick={() => {
+                        if (!navigator.geolocation) {
+                          toast.error("Geolocation not supported on this device.");
+                          return;
+                        }
+
+                        const loadingToast = toast.loading("Fetching your live location...");
+
+                        navigator.geolocation.getCurrentPosition(
+                          async (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            setLatitude(lat.toString());
+                            setLongitude(lon.toString());
+
+                            try {
+                              const res = await fetch(
+                                https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}
+                              );
+                              const data = await res.json();
+
+                              const place =
+                                data.address?.city ||
+                                data.address?.town ||
+                                data.address?.village ||
+                                data.address?.suburb ||
+                                data.display_name ||
+                                "Unknown location";
+
+                              setLocation(place);
+                              toast.dismiss(loadingToast);
+                              toast.success("Live location detected!");
+                            } catch {
+                              toast.dismiss(loadingToast);
+                              toast.error("Failed to get address from coordinates.");
+                            }
+                          },
+                          (err) => {
+                            toast.dismiss(loadingToast);
+                            toast.error("Location access denied or unavailable.");
+                            console.error(err);
+                          },
+                          { enableHighAccuracy: true, timeout: 10000 }
+                        );
+                      }}
+                    >
+                      <MapPin className="w-4 h-4 mr-2" /> Detect
+                    </Button>
+                  </div>
+
+                  {(latitude && longitude) && (
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">
+                      Lat: {latitude}, Lon: {longitude}
+                    </p>
+                  )}
                 </div>
 
-                {/* Map Coordinates (Optional) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="latitude" className="text-civix-dark-brown dark:text-civix-sandal">
-                      Latitude (Optional)
-                    </Label>
-                    <Input
-                      id="latitude"
-                      type="number"
-                      step="any"
-                      value={latitude}
-                      onChange={(e) => setLatitude(e.target.value)}
-                      placeholder="e.g., 40.7128"
-                      className="border-civix-warm-beige dark:border-gray-600"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="longitude" className="text-civix-dark-brown dark:text-civix-sandal">
-                      Longitude (Optional)
-                    </Label>
-                    <Input
-                      id="longitude"
-                      type="number"
-                      step="any"
-                      value={longitude}
-                      onChange={(e) => setLongitude(e.target.value)}
-                      placeholder="e.g., -74.0060"
-                      className="border-civix-warm-beige dark:border-gray-600"
-                    />
-                  </div>
-                </div>
 
                 {/* File Upload */}
                 <div className="space-y-2">
                   <Label className="text-civix-dark-brown dark:text-civix-sandal">
                     Upload Photo (Optional)
                   </Label>
-                  
+
                   {!previewUrl ? (
                     <div className="border-2 border-dashed border-civix-warm-beige dark:border-gray-600 rounded-lg p-8 text-center hover:border-civix-civic-green dark:hover:border-civix-civic-green transition-colors cursor-pointer">
                       <input
@@ -447,26 +502,15 @@ export default function ComplaintsModule({ onNavigate, userName }: ComplaintsMod
                 <div className="flex items-center space-x-4 pt-4">
                   <Button
                     type="submit"
-                    disabled={submitting}
                     className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white"
                   >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Submit Complaint
-                      </>
-                    )}
+                    <Upload className="w-4 h-4 mr-2" />
+                    Submit Complaint
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setView('list')}
-                    disabled={submitting}
                     className="border-civix-warm-beige dark:border-gray-600"
                   >
                     Cancel
