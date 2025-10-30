@@ -15,7 +15,8 @@ async function protect(req, res, next) {
     jwt.verify(token, secret, async (err, decoded) => {
       if (err) return res.status(401).json({ message: "Invalid token" });
       req.userid = decoded.id;
-      const user = await User.findById(decoded.id).select("role");
+      // select name and email as well so downstream routes can return user info
+      const user = await User.findById(decoded.id).select("name email role");
       if (!user) return res.status(404).json({ message: "User not found" });
       req.user = user;
       next();

@@ -1,20 +1,17 @@
+// auth.js
 const mongo = require("mongoose");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const crypto = require("crypto");
 const Blacklist = require("./model/blacklist");
-require("dotenv").config(); // ✅ Load .env
+require("dotenv").config();
 const nodemailer = require("nodemailer");
 const User = require("./model/User");
 
-// ✅ Corrected environment variable name (case-sensitive)
-const secret = process.env.JWT_SECRET;
-if (!secret) throw new Error("JWT secret is not defined");
+const secret = process.env.jwtsecret;
 
-// ------------------------------
-// Reverse Geocoding Helper
-// ------------------------------
+// Safe reverse geocoding - guard address existence
 async function city(lat, long) {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${long}&format=json`;
@@ -25,21 +22,18 @@ async function city(lat, long) {
     if (!address) return "unknown";
     return address.city || address.town || address.village || "unknown";
   } catch (err) {
-    console.log("City not known:", err?.message || err);
+    console.log("city not known", err?.message || err);
     return "unknown";
   }
 }
 
-// ------------------------------
-// SIGNUP
-// ------------------------------
 async function signup({ name, email, password, lat, long, role }) {
   if (!email || !password || !name || !role) {
     throw new Error("Missing required fields");
   }
 
   let existuser = await User.findOne({ email: email.toLowerCase() });
-  if (existuser) throw new Error("User already exists");
+  if (existuser) throw new Error("user already exist");
 
   const hashpd = await bcrypt.hash(password, 11);
   const cityname = lat && long ? await city(lat, long) : "unknown";
@@ -48,45 +42,50 @@ async function signup({ name, email, password, lat, long, role }) {
     email: email.toLowerCase(),
     password: hashpd,
     location: cityname,
-    role,
+    role: role,
   });
-
   await newuser.save();
-
-  const token = jwt.sign({ id: newuser._id }, secret, { expiresIn: "1h" });
+  // include role in the JWT payload; use proper jwt.sign signature
+  const token = jwt.sign({ id: newuser._id, role: newuser.role }, secret, {
+    expiresIn: "3h",
+  });
   return { token };
 }
 
-// ------------------------------
-// SIGNIN
-// ------------------------------
 async function signin({ email, password }) {
-  if (!email || !password) return { error: "Email and password are required" };
+  if (!email || !password) return { error: "email and password are required" };
 
   const existuser = await User.findOne({ email: email.toLowerCase() });
-  if (!existuser) return { error: "User not exist" };
+  if (!existuser) return { error: "user not exist" };
 
   const pd = await bcrypt.compare(password, existuser.password);
-  if (!pd) return { error: "Incorrect password" };
-
-  const token = jwt.sign({ id: existuser._id }, secret, { expiresIn: "1h" });
-  return { token };
+  if (!pd) return { error: "incorrect password" };
+  const token = jwt.sign({ id: existuser._id, role: existuser.role }, secret, {
+    expiresIn: "3h",
+  });
+  // return token and basic user info for frontend convenience
+  return {
+    token,
+    user: {
+      fullName: existuser.name,
+      email: existuser.email,
+      role: existuser.role,
+    },
+  };
 }
 
-// ------------------------------
-// EMAIL TRANSPORTER
-// ------------------------------
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // must be App Password or OAuth token
-  },
-});
+// Nodemailer transporter - use JSON transport in development to avoid real email
+const transporter =
+  process.env.NODE_ENV === "development"
+    ? nodemailer.createTransport({ jsonTransport: true })
+    : nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS, // should be an app password or OAuth token
+        },
+      });
 
-// ------------------------------
-// PASSWORD RESET EMAIL
-// ------------------------------
 const sendResetEmail = async (userEmail, userName, resetToken) => {
   const resetLink = `${
     process.env.FRONTEND_URL
@@ -140,14 +139,16 @@ const sendResetEmail = async (userEmail, userName, resetToken) => {
   }
 };
 
-// ------------------------------
-// REQUEST PASSWORD RESET
-// ------------------------------
+// requestReset - used by index.js route /requestreset
 const requestReset = async (req, res) => {
   try {
     const { email } = req.body;
+
     if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
     }
 
     const foundUser = await User.findOne({ email: email.toLowerCase() });
@@ -174,13 +175,14 @@ const requestReset = async (req, res) => {
     });
   } catch (error) {
     console.error("Request reset error:", error);
-    return res.status(500).json({ success: false, message: "An error occurred" });
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred. Please try again later",
+    });
   }
 };
 
-// ------------------------------
-// RESET PASSWORD
-// ------------------------------
+// resetpassword - used by index.js route /resetpassword
 const resetpassword = async (req, res) => {
   try {
     let { userEmail, token, newPassword } = req.body;
@@ -224,17 +226,18 @@ const resetpassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password reset successful. You can now login with your new password",
+      message:
+        "Password reset successful. You can now login with your new password",
     });
   } catch (error) {
     console.error("Reset password error:", error);
-    return res.status(500).json({ success: false, message: "An error occurred" });
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred. Please try again later",
+    });
   }
 };
 
-// ------------------------------
-// LOGOUT
-// ------------------------------
 async function logout(req, res) {
   try {
     const token = req.headers["authorization"]?.split(" ")[1];

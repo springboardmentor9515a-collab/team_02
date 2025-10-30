@@ -1,13 +1,9 @@
+// index.js
 const express = require("express");
 const dotenv = require("dotenv");
-const cors = require("cors");
 const connectDB = require("./config/db");
-
-// Import routes
 const complaintRoutes = require("./routes/complaintRoutes");
-const authRoutes = require("./routes/authRoutes");
-const petitionRoutes = require("./routes/petitionRoutes");
-const messageRoutes = require("./routes/messageRoutes"); // 🆕 Direct Messaging routes
+const cors = require("cors");
 
 // Load environment variables
 dotenv.config();
@@ -23,25 +19,26 @@ app.use(express.json());
 connectDB();
 
 // Routes
-app.use("/api/auth", authRoutes);
 app.use("/api/complaints", complaintRoutes);
-app.use("/api/petitions", petitionRoutes);
-app.use("/api/messages", messageRoutes); // 🆕 Added message API
 
-// Test route
+//auth
+const authRoutes = require("./routes/authRoutes");
+
+// Auth routes
+app.use("/api/auth", authRoutes);
+
+// User routes (admin operations)
+const userRoutes = require("./routes/userRoutes");
+app.use("/api/users", userRoutes);
+
+// Test route — this must have a valid function as 2nd argument
 app.get("/", (req, res) => {
-  res.send("✅ Server is running successfully!");
+  res.send("Server is running ✅");
 });
 
-// Handle invalid routes
+// Error handling for undefined routes
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
-});
-
-// Global error handler (optional but good practice)
-app.use((err, req, res, next) => {
-  console.error("Server Error:", err.stack);
-  res.status(500).json({ message: "Internal Server Error" });
 });
 
 // Start server
