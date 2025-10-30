@@ -34,6 +34,7 @@ exports.getAllComplaints = async (req, res) => {
   if (req.query.category) filter.category = req.query.category;
   if (req.query.status) filter.status = req.query.status;
   if (req.query.assigned_to) filter.assigned_to = req.query.assigned_to;
+  const complaints = await Complaint.find(filter);
   // populate assigned_to with volunteer name for frontend convenience
   const complaints = await Complaint.find(filter).populate(
     "assigned_to",
