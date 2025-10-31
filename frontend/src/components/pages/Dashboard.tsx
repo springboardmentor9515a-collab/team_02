@@ -1,13 +1,13 @@
-import { Button } from "./ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
-import { Progress } from "./ui/progress";
-import { Separator } from "./ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "./ui/sheet";
-import { Checkbox } from "./ui/checkbox";
-import { Switch } from "./ui/switch";
-import { Label } from "./ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { 
   Home, 
   FileText, 
@@ -40,9 +40,13 @@ import {
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import { toast } from "sonner";
+import { 
+  Activity,
+} from "lucide-react";
+import { Page } from "@/types";
 
 interface DashboardProps {
-  onNavigate: (page: 'landing' | 'petitions' | 'polls' | 'reports' | 'messages' | 'complaints' | 'admin' | 'volunteer') => void;
+  onNavigate: (page: Page, itemId?: string) => void;
   userName: string;
 }
 
@@ -55,83 +59,14 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [emailNotifications, setEmailNotifications] = useState(true);
 
-  // Mock data for petitions
-  const mockPetitions = [
-    {
-      id: '1',
-      title: "Improve Public Transportation",
-      description: "Increase bus frequency in downtown area during peak hours",
-      signatures: 1247,
-      goal: 2000,
-      location: "Downtown",
-      daysLeft: 15
-    },
-    {
-      id: '2',
-      title: "Install Solar Panels in Schools",
-      description: "Make our schools more sustainable and reduce energy costs",
-      signatures: 2891,
-      goal: 3000,
-      location: "Citywide",
-      daysLeft: 8
-    },
-    {
-      id: '3',
-      title: "Create More Community Parks",
-      description: "Convert vacant lots into green spaces for families",
-      signatures: 856,
-      goal: 1500,
-      location: "North Side",
-      daysLeft: 22
-    }
-  ];
+  // Petitions will be fetched from the backend; start with empty state
+  const mockPetitions: any[] = [];
 
-  // Mock data for polls
-  const mockPolls = [
-    {
-      id: '1',
-      question: "What should be the priority for city budget?",
-      options: [
-        { text: "Infrastructure", percentage: 38 },
-        { text: "Education", percentage: 33 },
-        { text: "Healthcare", percentage: 21 },
-        { text: "Environment", percentage: 8 }
-      ],
-      totalVotes: 900,
-      endsIn: "3 days"
-    },
-    {
-      id: '2',
-      question: "Should we implement a bike-sharing program?",
-      options: [
-        { text: "Yes, citywide", percentage: 52 },
-        { text: "Yes, pilot program", percentage: 34 },
-        { text: "No", percentage: 14 }
-      ],
-      totalVotes: 877,
-      endsIn: "1 week"
-    }
-  ];
+  // Polls will be fetched from the backend; start empty
+  const mockPolls: any[] = [];
 
-  // Mock data for official updates
-  const mockOfficialUpdates = [
-    {
-      id: '1',
-      official: "Mayor Johnson",
-      avatar: "/api/placeholder/40/40",
-      title: "Transportation Improvements Approved",
-      content: "The city council has approved funding for enhanced bus routes in the downtown area. Implementation begins next month.",
-      timestamp: "2 hours ago"
-    },
-    {
-      id: '2',
-      official: "City Council",
-      avatar: "/api/placeholder/40/40",
-      title: "Solar Panel Initiative Update",
-      content: "We're reviewing the proposal for solar panels in schools. A decision will be made at the next council meeting on Feb 15th.",
-      timestamp: "1 day ago"
-    }
-  ];
+  // Official updates will be fetched from backend; start empty
+  const mockOfficialUpdates: any[] = [];
 
   // Volunteer work categories
   const volunteerCategories = [
@@ -172,11 +107,11 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
 
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, onClick: () => setActiveSection('dashboard') },
-    { id: 'petitions', label: 'My Petitions', icon: FileText, onClick: () => onNavigate('petitions') },
-    { id: 'polls', label: 'Polls & Voting', icon: Vote, onClick: () => onNavigate('polls') },
-    { id: 'complaints', label: 'My Complaints', icon: AlertTriangle, onClick: () => onNavigate('complaints') },
-    { id: 'reports', label: 'Reports', icon: BarChart3, onClick: () => onNavigate('reports') },
-    { id: 'messages', label: 'Messages', icon: MessageSquare, onClick: () => onNavigate('messages') }
+    { id: 'petitions', label: 'My Petitions', icon: FileText, onClick: () => onNavigate('petitions' as Page) },
+    { id: 'complaints', label: 'My Complaints', icon: AlertTriangle, onClick: () => onNavigate('complaints' as Page) },
+    { id: 'polls', label: 'Polls & Voting', icon: Vote, onClick: () => onNavigate('polls' as Page) },
+    { id: 'reports', label: 'Reports', icon: BarChart3, onClick: () => onNavigate('reports' as Page) },
+    { id: 'messages', label: 'Messages', icon: MessageSquare, onClick: () => onNavigate('messages' as Page) }
   ];
 
   return (
@@ -195,10 +130,30 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
               </h1>
               
               <nav className="hidden md:flex items-center space-x-6">
-                <a href="#" className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors">Home</a>
-                <a href="#" className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors">Petitions</a>
-                <a href="#" className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors">Polls</a>
-                <a href="#" className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors">Reports</a>
+                <button onClick={() => onNavigate('dashboard')} className="text-civix-civic-green border-b-2 border-civix-civic-green">
+                  Home
+                </button>
+                <button 
+                  onClick={() => onNavigate('petitions')}
+                  className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors"
+                >
+                  Petitions
+                </button>
+                <button 
+                  onClick={() => onNavigate('complaints')}
+                  className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors"
+                >
+                  Complaints
+                </button>
+                <button 
+                  onClick={() => onNavigate('polls')}
+                  className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors"
+                >
+                  Polls
+                </button>
+                <button onClick={() => onNavigate('reports')} className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors">
+                  Reports
+                </button>
               </nav>
             </div>
 
@@ -209,22 +164,22 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                 <Bell className="w-5 h-5" />
               </Button>
               
-              <div className="flex items-center space-x-2 min-w-0">
-                <Avatar className="shrink-0">
+              <div className="flex items-center space-x-2">
+                <Avatar>
                   <AvatarImage src="/api/placeholder/40/40" />
                   <AvatarFallback className="bg-civix-civic-green text-white">
                     {userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="hidden md:block min-w-0 max-w-[150px]">
-                  <p className="text-sm text-civix-dark-brown dark:text-civix-sandal truncate" style={{ fontWeight: '600' }}>{userName}</p>
-                  <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60 truncate">Civic Member</p>
+                <div className="hidden md:block">
+                  <p className="text-sm text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '600' }}>{userName}</p>
+                  <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">Civic Member</p>
                 </div>
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => onNavigate('landing')}
-                  className="text-civix-dark-brown dark:text-civix-sandal hover:bg-civix-warm-beige dark:hover:bg-gray-700 shrink-0"
+                  onClick={() => onNavigate('landing' as Page)}
+                  className="text-civix-dark-brown dark:text-civix-sandal hover:bg-civix-warm-beige dark:hover:bg-gray-700"
                 >
                   <LogOut className="w-4 h-4" />
                 </Button>
@@ -235,10 +190,9 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
+        <div className="grid lg:grid-cols-12 gap-8">
           {/* Left Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Navigation */}
+          <div className="lg:col-span-3">
             <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
               <CardContent className="p-6">
                 <nav className="space-y-2">
@@ -260,8 +214,361 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                 </nav>
               </CardContent>
             </Card>
+          </div>
 
-            {/* This Month Stats */}
+          {/* Main Content */}
+          <div className="lg:col-span-6 space-y-8">
+            {/* Welcome Banner */}
+            <Card className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white border-0 shadow-lg">
+              <CardContent className="p-8">
+                <h2 className="text-3xl mb-2" style={{ fontWeight: '700' }}>Welcome back, {userName}!</h2>
+                <p className="text-white/90 text-lg">Ready to make a difference in your community today?</p>
+              </CardContent>
+            </Card>
+
+            {/* Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => onNavigate('petitions' as Page)}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Total Petitions</p>
+                      <p className="text-3xl text-civix-civic-green" style={{ fontWeight: '700' }}>12</p>
+                      <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">3 signed this week</p>
+                    </div>
+                    <div className="bg-civix-civic-green/10 dark:bg-civix-civic-green/20 p-3 rounded-lg">
+                      <FileText className="w-6 h-6 text-civix-civic-green" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => onNavigate('polls' as Page)}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Active Polls</p>
+                      <p className="text-3xl text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '700' }}>8</p>
+                      <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">2 voted today</p>
+                    </div>
+                    <div className="bg-civix-dark-brown/10 dark:bg-civix-sandal/20 p-3 rounded-lg">
+                      <Vote className="w-6 h-6 text-civix-dark-brown dark:text-civix-sandal" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => onNavigate('complaints' as Page)}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">My Complaints</p>
+                      <p className="text-3xl text-civix-civic-green" style={{ fontWeight: '700' }}>4</p>
+                      <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">2 assigned</p>
+                    </div>
+                    <div className="bg-civix-civic-green/10 dark:bg-civix-civic-green/20 p-3 rounded-lg">
+                      <AlertTriangle className="w-6 h-6 text-civix-civic-green" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => onNavigate('messages' as Page)}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Messages Received</p>
+                      <p className="text-3xl text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '700' }}>4</p>
+                      <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">1 unread</p>
+                    </div>
+                    <div className="bg-civix-dark-brown/10 dark:bg-civix-sandal/20 p-3 rounded-lg">
+                      <MessageSquare className="w-6 h-6 text-civix-dark-brown dark:text-civix-sandal" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Access Buttons */}
+            <div>
+              <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-6" style={{ fontWeight: '700' }}>Quick Actions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Button 
+                  onClick={() => onNavigate('petitions' as Page)}
+                  className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-6 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
+                >
+                  <FileText className="w-8 h-8" />
+                  <span className="text-lg" style={{ fontWeight: '600' }}>Create Petition</span>
+                  <span className="text-sm opacity-90">Start a new petition</span>
+                </Button>
+
+                <Button 
+                  onClick={() => onNavigate('complaints' as Page)}
+                  className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-6 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
+                >
+                  <AlertTriangle className="w-8 h-8" />
+                  <span className="text-lg" style={{ fontWeight: '600' }}>Submit Complaint</span>
+                  <span className="text-sm opacity-90">Report an issue</span>
+                </Button>
+
+                <Button 
+                  onClick={() => onNavigate('polls' as Page)}
+                  className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-6 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
+                >
+                  <Vote className="w-8 h-8" />
+                  <span className="text-lg" style={{ fontWeight: '600' }}>Start Poll</span>
+                  <span className="text-sm opacity-90">Create a new poll</span>
+                </Button>
+
+                <Button 
+                  onClick={() => onNavigate('messages' as Page)}
+                  className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-6 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
+                >
+                  <MessageSquare className="w-8 h-8" />
+                  <span className="text-lg" style={{ fontWeight: '600' }}>View Messages</span>
+                  <span className="text-sm opacity-90">Check your inbox</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Admin & Volunteer Access */}
+            <div>
+              <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-6" style={{ fontWeight: '700' }}>Admin & Volunteer Access</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button 
+                  onClick={() => onNavigate('admin' as Page)}
+                  className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-6 h-auto flex items-center justify-between hover:opacity-90"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="bg-white/20 p-3 rounded-lg">
+                      <Shield className="w-8 h-8" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xl" style={{ fontWeight: '600' }}>Admin Dashboard</div>
+                      <div className="text-sm opacity-90">Manage all complaints & assign volunteers</div>
+                    </div>
+                  </div>
+                </Button>
+
+                <Button 
+                  onClick={() => onNavigate('volunteer' as Page)}
+                  className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-6 h-auto flex items-center justify-between hover:opacity-90"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="bg-white/20 p-3 rounded-lg">
+                      <UserCheck className="w-8 h-8" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xl" style={{ fontWeight: '600' }}>Volunteer Dashboard</div>
+                      <div className="text-sm opacity-90">View & update assigned complaints</div>
+                    </div>
+                  </div>
+                </Button>
+              </div>
+            </div>
+
+            {/* Volunteer Registration Section */}
+            <Card className="bg-gradient-to-br from-civix-civic-green/10 to-civix-sandal/20 dark:from-civix-civic-green/20 dark:to-gray-700/50 border-2 border-civix-civic-green/30 dark:border-civix-civic-green/40 shadow-xl">
+              <CardContent className="p-8">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex items-center space-x-6 flex-1">
+                    <div className="bg-civix-civic-green/20 dark:bg-civix-civic-green/30 p-6 rounded-full">
+                      <UserPlus className="w-12 h-12 text-civix-civic-green" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-2" style={{ fontWeight: '700' }}>
+                        Become a Volunteer
+                      </h3>
+                      <p className="text-civix-dark-brown/80 dark:text-civix-sandal/80">
+                        Help your community by volunteering for various causes and initiatives
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => setVolunteerSheetOpen(true)}
+                    className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white px-8 py-6 text-lg hover:opacity-90 shadow-lg"
+                  >
+                    <UserPlus className="w-5 h-5 mr-2" />
+                    Register as Volunteer
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Active Petitions */}
+            <div>
+              <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-6" style={{ fontWeight: '700' }}>Active Petitions</h3>
+              <div className="space-y-6">
+                {mockPetitions.map((petition) => (
+                  <Card key={petition.id} className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h4 className="text-xl text-civix-dark-brown dark:text-civix-sandal mb-2" style={{ fontWeight: '600' }}>{petition.title}</h4>
+                          <div className="flex items-center space-x-4 text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-2">
+                            <span className="bg-civix-warm-beige dark:bg-gray-700 px-2 py-1 rounded">
+                              <MapPin className="w-3 h-3 inline mr-1" />
+                              {petition.location}
+                            </span>
+                            <span className="flex items-center">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              {petition.daysLeft} days left
+                            </span>
+                          </div>
+                          <p className="text-civix-dark-brown/80 dark:text-civix-sandal/80 mb-4">{petition.description}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-civix-dark-brown/70 dark:text-civix-sandal/70">{petition.signatures.toLocaleString()} signatures</span>
+                          <span className="text-civix-dark-brown/70 dark:text-civix-sandal/70">Goal: {petition.goal.toLocaleString()}</span>
+                        </div>
+                        <Progress value={(petition.signatures / petition.goal) * 100} className="h-2" />
+                        
+                        <div className="flex items-center space-x-3 pt-2">
+                          <Button size="sm" className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white">
+                            <Eye className="w-3 h-3 mr-1" />
+                            View
+                          </Button>
+                          <Button size="sm" variant="outline" className="border-civix-civic-green text-civix-civic-green hover:bg-civix-civic-green hover:text-white">
+                            <ThumbsUp className="w-3 h-3 mr-1" />
+                            Sign
+                          </Button>
+                          <Button size="sm" variant="outline" className="border-civix-dark-brown text-civix-dark-brown dark:border-civix-sandal dark:text-civix-sandal hover:bg-civix-dark-brown hover:text-white dark:hover:bg-civix-sandal dark:hover:text-civix-dark-brown">
+                            <Share2 className="w-3 h-3 mr-1" />
+                            Share
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Public Sentiment Polls */}
+            <div>
+              <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-6" style={{ fontWeight: '700' }}>Public Sentiment Polls</h3>
+              <div className="space-y-6">
+                {mockPolls.map((poll) => (
+                  <Card key={poll.id} className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <h4 className="text-lg text-civix-dark-brown dark:text-civix-sandal flex-1" style={{ fontWeight: '600' }}>{poll.question}</h4>
+                        <Badge variant="outline" className="border-civix-civic-green text-civix-civic-green">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          Ends in {poll.endsIn}
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-3 mb-4">
+                        {poll.options.map((option: { text: string; percentage: number }, index: number) => (
+                          <div key={index} className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-civix-dark-brown dark:text-civix-sandal">{option.text}</span>
+                              <span className="text-civix-dark-brown/70 dark:text-civix-sandal/70">{option.percentage}%</span>
+                            </div>
+                            <Progress value={option.percentage} className="h-2" />
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">{poll.totalVotes.toLocaleString()} total votes</span>
+                        <Button size="sm" className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white">
+                          <Vote className="w-3 h-3 mr-1" />
+                          Vote Now
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Official Updates */}
+            <div>
+              <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-6" style={{ fontWeight: '700' }}>Official Updates</h3>
+              <div className="space-y-4">
+                {mockOfficialUpdates.map((update) => (
+                  <Card key={update.id} className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-start space-x-4">
+                        <Avatar>
+                          <AvatarImage src={update.avatar} />
+                          <AvatarFallback className="bg-civix-dark-brown text-white">
+                            {update.official.split(' ').map((n: string) => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h5 className="text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '600' }}>{update.official}</h5>
+                            <Badge className="bg-civix-civic-green text-white text-xs">Verified</Badge>
+                          </div>
+                          <h6 className="text-civix-dark-brown dark:text-civix-sandal mb-2" style={{ fontWeight: '600' }}>{update.title}</h6>
+                          <p className="text-civix-dark-brown/80 dark:text-civix-sandal/80 mb-2">{update.content}</p>
+                          <span className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">{update.timestamp}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Quick Poll Widget */}
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg text-civix-dark-brown dark:text-civix-sandal">Quick Poll</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-civix-dark-brown/80 dark:text-civix-sandal/80 mb-4">How would you rate your city's response to citizen concerns?</p>
+                <div className="space-y-2">
+                  {['Excellent', 'Good', 'Fair', 'Poor'].map((rating) => (
+                    <Button 
+                      key={rating} 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start border-civix-warm-beige dark:border-gray-600 text-civix-dark-brown dark:text-civix-sandal hover:bg-civix-warm-beige dark:hover:bg-gray-700"
+                    >
+                      {rating}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Trending Petitions Widget */}
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg text-civix-dark-brown dark:text-civix-sandal flex items-center">
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Trending Now
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-civix-dark-brown dark:text-civix-sandal">Solar Panel Schools</span>
+                    <Badge className="bg-civix-civic-green text-white text-xs">Hot</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-civix-dark-brown dark:text-civix-sandal">Bike Lane Expansion</span>
+                    <Badge variant="outline" className="border-civix-civic-green text-civix-civic-green text-xs">Rising</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-civix-dark-brown dark:text-civix-sandal">Library Hours Extension</span>
+                    <Badge variant="outline" className="border-civix-warm-beige dark:border-civix-sandal text-civix-dark-brown dark:text-civix-sandal text-xs">New</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Transparency Stats */}
             <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg text-civix-dark-brown dark:text-civix-sandal">This Month</CardTitle>
@@ -285,339 +592,6 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                 </div>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Main Content - Full Width */}
-          <div className="lg:col-span-3 space-y-8">
-            {/* Welcome Banner */}
-            <Card className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white border-0 shadow-lg">
-              <CardContent className="p-8">
-                <h2 className="text-3xl mb-2" style={{ fontWeight: '700' }}>Welcome back, {userName}!</h2>
-                <p className="text-white/90 text-lg">Ready to make a difference in your community today?</p>
-              </CardContent>
-            </Card>
-
-            {/* Combined Overview & Quick Actions Container */}
-            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-2xl text-civix-dark-brown dark:text-civix-sandal">Overview & Quick Actions</CardTitle>
-                <CardDescription className="text-civix-dark-brown/70 dark:text-civix-sandal/70">
-                  Your activity summary and quick access to common actions
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                {/* Overview Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                  <div 
-                    className="bg-gradient-to-br from-civix-civic-green/10 to-civix-civic-green/5 dark:from-civix-civic-green/20 dark:to-civix-civic-green/10 p-6 rounded-lg border border-civix-civic-green/20 cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => onNavigate('petitions')}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 space-y-1">
-                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Total Petitions</p>
-                        <p className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>12</p>
-                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">3 signed this week</p>
-                      </div>
-                      <div className="bg-civix-civic-green/20 p-2 rounded-lg shrink-0">
-                        <FileText className="w-5 h-5 text-civix-civic-green" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div 
-                    className="bg-gradient-to-br from-civix-dark-brown/10 to-civix-dark-brown/5 dark:from-civix-sandal/20 dark:to-civix-sandal/10 p-6 rounded-lg border border-civix-dark-brown/20 dark:border-civix-sandal/20 cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => onNavigate('polls')}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 space-y-1">
-                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Active Polls</p>
-                        <p className="text-2xl text-civix-dark-green dark:text-civix-sandal" style={{ fontWeight: '700' }}>8</p>
-                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">2 voted today</p>
-                      </div>
-                      <div className="bg-civix-dark-brown/20 dark:bg-civix-sandal/20 p-2 rounded-lg shrink-0">
-                        <Vote className="w-5 h-5 text-civix-dark-brown dark:text-civix-sandal" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div 
-                    className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 dark:from-orange-500/20 dark:to-orange-500/10 p-6 rounded-lg border border-orange-500/20 cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => onNavigate('complaints')}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 space-y-1">
-                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">My Complaints</p>
-                        <p className="text-2xl text-orange-500" style={{ fontWeight: '700' }}>4</p>
-                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">2 assigned</p>
-                      </div>
-                      <div className="bg-orange-500/20 p-2 rounded-lg shrink-0">
-                        <AlertTriangle className="w-5 h-5 text-orange-500" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div 
-                    className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 dark:from-blue-500/20 dark:to-blue-500/10 p-6 rounded-lg border border-blue-500/20 cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => onNavigate('messages')}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 space-y-1">
-                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Messages</p>
-                        <p className="text-2xl text-blue-500" style={{ fontWeight: '700' }}>4</p>
-                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">1 unread</p>
-                      </div>
-                      <div className="bg-blue-500/20 p-2 rounded-lg shrink-0">
-                        <MessageSquare className="w-5 h-5 text-blue-500" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator className="my-6" />
-
-                {/* Quick Access Buttons */}
-                <div>
-                  <h4 className="text-lg text-civix-dark-brown dark:text-civix-sandal mb-4" style={{ fontWeight: '600' }}>Quick Actions</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Button 
-                      onClick={() => onNavigate('petitions')}
-                      className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                    >
-                      <FileText className="w-6 h-6 shrink-0" />
-                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>Create Petition</span>
-                    </Button>
-
-                    <Button 
-                      onClick={() => onNavigate('complaints')}
-                      className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                    >
-                      <AlertTriangle className="w-6 h-6 shrink-0" />
-                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>Submit Complaint</span>
-                    </Button>
-
-                    <Button 
-                      onClick={() => onNavigate('polls')}
-                      className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                    >
-                      <Vote className="w-6 h-6 shrink-0" />
-                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>Start Poll</span>
-                    </Button>
-
-                    <Button 
-                      onClick={() => onNavigate('messages')}
-                      className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                    >
-                      <MessageSquare className="w-6 h-6 shrink-0" />
-                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>View Messages</span>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-{/* Admin & Volunteer Access Container */}
-<Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-  <CardHeader>
-    <CardTitle className="text-2xl text-civix-dark-brown dark:text-civix-sandal">Admin & Volunteer Access</CardTitle>
-    <CardDescription className="text-civix-dark-brown/70 dark:text-civix-sandal/70">
-      Access specialized dashboards for administrative and volunteer functions
-    </CardDescription>
-  </CardHeader>
-  <CardContent className="p-6">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div 
-        onClick={() => onNavigate('admin')}
-        className="group bg-gradient-to-r from-civix-dark-brown to-civix-civic-green rounded-lg cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl overflow-hidden"
-      >
-        <div className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="bg-white/20 p-3 rounded-lg shrink-0 transition-all duration-300 group-hover:scale-110">
-              <Shield className="w-8 h-8 text-white transition-all duration-300" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-xl text-white mb-1 transition-all duration-300 group-hover:text-2xl" style={{ fontWeight: '600' }}>
-                Admin Dashboard
-              </h4>
-              <p className="text-sm text-white/90 transition-all duration-300 group-hover:text-white">
-                Manage all complaints & assign volunteers
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div 
-        onClick={() => onNavigate('volunteer')}
-        className="group bg-gradient-to-r from-civix-civic-green to-civix-dark-brown rounded-lg cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl overflow-hidden"
-      >
-        <div className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="bg-white/20 p-3 rounded-lg shrink-0 transition-all duration-300 group-hover:scale-110">
-              <UserCheck className="w-8 h-8 text-white transition-all duration-300" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-xl text-white mb-1 transition-all duration-300 group-hover:text-2xl" style={{ fontWeight: '600' }}>
-                Volunteer Dashboard
-              </h4>
-              <p className="text-sm text-white/90 transition-all duration-300 group-hover:text-white">
-                View & update assigned complaints
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </CardContent>
-</Card>
-
-            {/* Volunteer Registration Section */}
-            <Card className="bg-gradient-to-br from-civix-civic-green/10 to-civix-sandal/20 dark:from-civix-civic-green/20 dark:to-gray-700/50 border-2 border-civix-civic-green/30 dark:border-civix-civic-green/40 shadow-xl">
-              <CardContent className="p-8">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="flex items-center space-x-6 flex-1 min-w-0">
-                    <div className="bg-civix-civic-green/20 dark:bg-civix-civic-green/30 p-6 rounded-full shrink-0">
-                      <UserPlus className="w-12 h-12 text-civix-civic-green" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-2" style={{ fontWeight: '700' }}>
-                        Become a Volunteer
-                      </h3>
-                      <p className="text-civix-dark-brown/80 dark:text-civix-sandal/80">
-                        Help your community by volunteering for various causes and initiatives
-                      </p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={() => setVolunteerSheetOpen(true)}
-                    className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white px-8 py-6 text-lg hover:opacity-90 shadow-lg shrink-0"
-                  >
-                    <UserPlus className="w-5 h-5 mr-2 shrink-0" />
-                    Register as Volunteer
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Active Petitions */}
-            <div>
-              <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-6" style={{ fontWeight: '700' }}>Active Petitions</h3>
-              <div className="space-y-6">
-                {mockPetitions.map((petition) => (
-                  <Card key={petition.id} className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4 gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-xl text-civix-dark-brown dark:text-civix-sandal mb-2" style={{ fontWeight: '600' }}>{petition.title}</h4>
-                          <div className="flex items-center flex-wrap gap-2 text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-2">
-                            <span className="bg-civix-warm-beige dark:bg-gray-700 px-2 py-1 rounded flex items-center shrink-0">
-                              <MapPin className="w-3 h-3 mr-1 shrink-0" />
-                              {petition.location}
-                            </span>
-                            <span className="flex items-center shrink-0">
-                              <Calendar className="w-3 h-3 mr-1 shrink-0" />
-                              {petition.daysLeft} days left
-                            </span>
-                          </div>
-                          <p className="text-civix-dark-brown/80 dark:text-civix-sandal/80 mb-4">{petition.description}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-sm flex-wrap gap-2">
-                          <span className="text-civix-dark-brown/70 dark:text-civix-sandal/70">{petition.signatures.toLocaleString()} signatures</span>
-                          <span className="text-civix-dark-brown/70 dark:text-civix-sandal/70">Goal: {petition.goal.toLocaleString()}</span>
-                        </div>
-                        <Progress value={(petition.signatures / petition.goal) * 100} className="h-2" />
-                        
-                        <div className="flex items-center flex-wrap gap-3 pt-2">
-                          <Button size="sm" className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white shrink-0">
-                            <Eye className="w-3 h-3 mr-1 shrink-0" />
-                            View
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-civix-civic-green text-civix-civic-green hover:bg-civix-civic-green hover:text-white shrink-0">
-                            <ThumbsUp className="w-3 h-3 mr-1 shrink-0" />
-                            Sign
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-civix-dark-brown text-civix-dark-brown dark:border-civix-sandal dark:text-civix-sandal hover:bg-civix-dark-brown hover:text-white dark:hover:bg-civix-sandal dark:hover:text-civix-dark-brown shrink-0">
-                            <Share2 className="w-3 h-3 mr-1 shrink-0" />
-                            Share
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Public Sentiment Polls */}
-            <div>
-              <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-6" style={{ fontWeight: '700' }}>Public Sentiment Polls</h3>
-              <div className="space-y-6">
-                {mockPolls.map((poll) => (
-                  <Card key={poll.id} className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4 gap-4">
-                        <h4 className="text-lg text-civix-dark-brown dark:text-civix-sandal flex-1 min-w-0" style={{ fontWeight: '600' }}>{poll.question}</h4>
-                        <Badge variant="outline" className="border-civix-civic-green text-civix-civic-green shrink-0 whitespace-nowrap">
-                          <Calendar className="w-3 h-3 mr-1 shrink-0" />
-                          Ends in {poll.endsIn}
-                        </Badge>
-                      </div>
-                      
-                      <div className="space-y-3 mb-4">
-                        {poll.options.map((option, index) => (
-                          <div key={index} className="space-y-2">
-                            <div className="flex items-center justify-between text-sm gap-4">
-                              <span className="text-civix-dark-brown dark:text-civix-sandal min-w-0 flex-1">{option.text}</span>
-                              <span className="text-civix-dark-brown/70 dark:text-civix-sandal/70 shrink-0">{option.percentage}%</span>
-                            </div>
-                            <Progress value={option.percentage} className="h-2" />
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <div className="flex items-center justify-between pt-2 flex-wrap gap-3">
-                        <span className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">{poll.totalVotes.toLocaleString()} total votes</span>
-                        <Button size="sm" className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white shrink-0">
-                          <Vote className="w-3 h-3 mr-1 shrink-0" />
-                          Vote Now
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Official Updates */}
-            <div>
-              <h3 className="text-2xl text-civix-dark-brown dark:text-civix-sandal mb-6" style={{ fontWeight: '700' }}>Official Updates</h3>
-              <div className="space-y-4">
-                {mockOfficialUpdates.map((update) => (
-                  <Card key={update.id} className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="flex items-start space-x-4 min-w-0">
-                        <Avatar className="shrink-0">
-                          <AvatarImage src={update.avatar} />
-                          <AvatarFallback className="bg-civix-dark-brown text-white">
-                            {update.official.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center flex-wrap gap-2 mb-1">
-                            <h5 className="text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '600' }}>{update.official}</h5>
-                            <Badge className="bg-civix-civic-green text-white text-xs shrink-0">Verified</Badge>
-                          </div>
-                          <h6 className="text-civix-dark-brown dark:text-civix-sandal mb-2" style={{ fontWeight: '600' }}>{update.title}</h6>
-                          <p className="text-civix-dark-brown/80 dark:text-civix-sandal/80 mb-2">{update.content}</p>
-                          <span className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">{update.timestamp}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -698,11 +672,11 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                         <Checkbox 
                           checked={selectedCategories.includes(category.id)}
                           onCheckedChange={() => handleCategoryToggle(category.id)}
-                          className="mt-1 shrink-0"
+                          className="mt-1"
                         />
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-1">
-                            <div className={`p-2 rounded-lg shrink-0 ${
+                            <div className={`p-2 rounded-lg ${
                               selectedCategories.includes(category.id)
                                 ? 'bg-civix-civic-green/20'
                                 : 'bg-civix-warm-beige dark:bg-gray-700'
@@ -713,7 +687,7 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                                   : 'text-civix-dark-brown dark:text-civix-sandal'
                               }`} />
                             </div>
-                            <h4 className="text-civix-dark-brown dark:text-civix-sandal min-w-0" style={{ fontWeight: '600' }}>
+                            <h4 className="text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '600' }}>
                               {category.name}
                             </h4>
                           </div>
@@ -758,12 +732,12 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
 
                 <Card className="bg-civix-warm-beige/50 dark:bg-gray-700/50 border-civix-warm-beige dark:border-gray-600">
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start space-x-4 flex-1 min-w-0">
-                        <div className="bg-civix-civic-green/20 p-3 rounded-lg shrink-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start space-x-4 flex-1">
+                        <div className="bg-civix-civic-green/20 p-3 rounded-lg">
                           <Bell className="w-6 h-6 text-civix-civic-green" />
                         </div>
-                        <div className="min-w-0 flex-1">
+                        <div>
                           <Label htmlFor="email-notifications" className="text-lg text-civix-dark-brown dark:text-civix-sandal cursor-pointer" style={{ fontWeight: '600' }}>
                             Email Notifications
                           </Label>
@@ -776,7 +750,7 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                         id="email-notifications"
                         checked={emailNotifications}
                         onCheckedChange={setEmailNotifications}
-                        className="shrink-0"
+                        className="ml-4"
                       />
                     </div>
                   </CardContent>
@@ -844,10 +818,10 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                               key={category.id} 
                               className="flex items-center space-x-3 p-3 bg-white dark:bg-gray-800 rounded-lg"
                             >
-                              <div className="bg-civix-civic-green/20 p-2 rounded-lg shrink-0">
+                              <div className="bg-civix-civic-green/20 p-2 rounded-lg">
                                 <Icon className="w-5 h-5 text-civix-civic-green" />
                               </div>
-                              <div className="min-w-0 flex-1">
+                              <div>
                                 <h4 className="text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '600' }}>
                                   {category.name}
                                 </h4>
@@ -869,8 +843,8 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center space-x-3 min-w-0">
-                      <div className={`p-2 rounded-lg shrink-0 ${
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg ${
                         emailNotifications 
                           ? 'bg-civix-civic-green/20' 
                           : 'bg-gray-200 dark:bg-gray-700'
@@ -881,7 +855,7 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                             : 'text-gray-400'
                         }`} />
                       </div>
-                      <div className="min-w-0 flex-1">
+                      <div>
                         <p className="text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '600' }}>
                           Email Notifications: {emailNotifications ? 'Enabled' : 'Disabled'}
                         </p>
