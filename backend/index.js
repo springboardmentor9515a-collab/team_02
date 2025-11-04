@@ -21,6 +21,14 @@ connectDB();
 // Routes
 app.use("/api/complaints", complaintRoutes);
 
+// Petitions routes
+const petitionsRoutes = require("./routes/petitions");
+app.use("/api/petitions", petitionsRoutes);
+
+// Polls routes
+const pollsRoutes = require("./routes/polls");
+app.use("/api/polls", pollsRoutes);
+
 //auth
 const authRoutes = require("./routes/authRoutes");
 

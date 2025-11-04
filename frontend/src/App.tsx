@@ -14,7 +14,6 @@ import Dashboard from "@/components/pages/Dashboard";
 import PetitionsModule from "@/components/pages/PetitionsModule";
 import PollsModule from "@/components/pages/pollsmodule";
 import ReportsModule from "@/components/pages/ReportsModule";
-import MessagesModule from "@/components/pages/MessageModule";
 import ComplaintsModule from "@/components/pages/ComplaintsModule";
 import AdminDashboard from "@/components/pages/AdminDashboard";
 import VolunteerDashboard from "@/components/pages/VolunteerDashboard";
@@ -58,8 +57,6 @@ function AppContent() {
         return <PollsModule onNavigate={navigate} selectedItemId={selectedItemId} userName={user?.fullName || 'User'} />;
       case 'reports':
         return <ReportsModule onNavigate={navigate} selectedItemId={selectedItemId} userName={user?.fullName || 'User'} />;
-      case 'messages':
-        return <MessagesModule onNavigate={navigate} selectedItemId={selectedItemId} userName={user?.fullName || 'User'} />;
       case 'complaints':
         return <ComplaintsModule onNavigate={navigate} userName={user?.fullName || 'User'} />;
       case 'admin':
