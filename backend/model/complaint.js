@@ -8,6 +8,8 @@ const ComplaintSchema = new mongoose.Schema(
     category: { type: String, index: true, required: true },
     photo_url: { type: String },
     location: { type: String, required: true },
+    latitude: { type: Number, required: false },
+    longitude: { type: Number, required: false },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

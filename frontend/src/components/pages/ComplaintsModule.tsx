@@ -132,7 +132,7 @@ export default function ComplaintsModule({ onNavigate, userName }: ComplaintsMod
       setView('list');
     } catch (error: any) {
       console.error('Error submitting complaint:', error);
-      toast.error(error.response?.data?.message || 'Failed to submit complaint. Please try again.');
+      toast.error(error.response?.data?.message || 'Failed to submit complaint. Please try again.',error);
     } finally {
       setSubmitting(false);
     }

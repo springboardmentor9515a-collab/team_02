@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +53,89 @@ interface Volunteer {
 }
 
 export default function AdminDashboard({ onNavigate, userName }: AdminDashboardProps) {
+  // Get user role from localStorage
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userRole = user.role || '';
+
+  // Petition details dialog state (admin)
+  const [petitionDetailsDialogOpen, setPetitionDetailsDialogOpen] = useState(false);
+  const [selectedPetition, setSelectedPetition] = useState<any>(null);
+  const [adminComment, setAdminComment] = useState("");
+  const [adminCommentLoading, setAdminCommentLoading] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  const [petitionComments, setPetitionComments] = useState<any[]>([]);
+
+  // Load comments when dialog opens
+  useEffect(() => {
+    if (petitionDetailsDialogOpen && selectedPetition) {
+      setPetitionComments(selectedPetition.comments || []);
+    }
+  }, [petitionDetailsDialogOpen, selectedPetition]);
+
+  const handleAdminComment = async () => {
+    if (!adminComment.trim() || !selectedPetition) return;
+    setAdminCommentLoading(true);
+    try {
+      const { commentPetition } = await import("@/lib/api").then(mod => mod.petitionsAPI);
+      const res = await commentPetition(selectedPetition._id, adminComment);
+      setPetitionComments(res.comments || []);
+      setAdminComment("");
+      toast.success("Comment added");
+    } catch (err) {
+      toast.error("Failed to add comment");
+    } finally {
+      setAdminCommentLoading(false);
+    }
+  };
+
+  const handleResolvePetition = async () => {
+    if (!selectedPetition) return;
+    setResolving(true);
+    try {
+      const { resolvePetition } = await import("@/lib/api").then(mod => mod.petitionsAPI);
+      await resolvePetition(selectedPetition._id, adminComment);
+      toast.success("Petition resolved");
+      setPetitionDetailsDialogOpen(false);
+      // Refresh petitions list
+      const { getAllPetitions } = await import("@/lib/api").then(mod => mod.petitionsAPI);
+      const data = await getAllPetitions();
+      setPetitions(Array.isArray(data) ? data : (data.petitions || []));
+    } catch (err) {
+      toast.error("Failed to resolve petition");
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  // Handle voting on a poll
+  const handleVotePoll = async (pollId: string) => {
+    try {
+      // For demo: always vote for first option
+      const poll = polls.find(p => p._id === pollId);
+      if (!poll) return;
+      const optionIndex = 0;
+      const { vote } = await import("@/lib/api").then(mod => mod.pollsAPI);
+      await vote(pollId, optionIndex.toString());
+      toast.success('Vote submitted!');
+    } catch (err) {
+      toast.error('Failed to vote');
+    }
+  };
+
+  // Handle signing a petition
+  const handleSignPetition = async (petitionId: string) => {
+    try {
+      const { signPetition } = await import("@/lib/api").then(mod => mod.petitionsAPI);
+      await signPetition(petitionId);
+      toast.success('Petition signed!');
+    } catch (err) {
+      toast.error('Failed to sign petition');
+    }
+  };
+  // Dialog state for create poll/petition
+  const [createPollOpen, setCreatePollOpen] = useState(false);
+  const [createPetitionOpen, setCreatePetitionOpen] = useState(false);
+  // ...existing code...
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchLocation, setSearchLocation] = useState<string>('');
@@ -65,9 +148,43 @@ export default function AdminDashboard({ onNavigate, userName }: AdminDashboardP
   const [loading, setLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [polls, setPolls] = useState<any[]>([]);
+  const [petitions, setPetitions] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'complaints' | 'polls' | 'petitions'>('complaints');
 
   // Real data from API
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+
+  // Load polls and petitions on mount and when search changes
+  useEffect(() => {
+    const fetchPolls = async () => {
+      try {
+        // @ts-ignore
+        const { getAllPolls } = await import("@/lib/api").then(mod => mod.pollsAPI);
+        const filters = debouncedSearch ? { target_location: debouncedSearch } : {};
+        const data = await getAllPolls(filters);
+        setPolls(Array.isArray(data) ? data : (data.polls || []));
+      } catch (err) {
+        console.error("Error loading polls:", err);
+      }
+    };
+    fetchPolls();
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    const fetchPetitions = async () => {
+      try {
+        // @ts-ignore
+        const { getAllPetitions } = await import("@/lib/api").then(mod => mod.petitionsAPI);
+        const filters = debouncedSearch ? { location: debouncedSearch } : {};
+        const data = await getAllPetitions(filters);
+        setPetitions(Array.isArray(data) ? data : (data.petitions || []));
+      } catch (err) {
+        console.error("Error loading petitions:", err);
+      }
+    };
+    fetchPetitions();
+  }, [debouncedSearch]);
 
   // Load complaints on component mount
   useEffect(() => {
@@ -188,129 +305,474 @@ export default function AdminDashboard({ onNavigate, userName }: AdminDashboardP
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Total Complaints</p>
-                  <p className="text-3xl text-civix-civic-green" style={{ fontWeight: '700' }}>{complaints.length}</p>
-                </div>
-                <div className="bg-civix-civic-green/10 dark:bg-civix-civic-green/20 p-3 rounded-lg">
-                  <FileText className="w-6 h-6 text-civix-civic-green" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Pending</p>
-                  <p className="text-3xl text-yellow-600" style={{ fontWeight: '700' }}>
-                    {complaints.filter(c => c.status === 'received').length}
-                  </p>
-                </div>
-                <div className="bg-yellow-100 dark:bg-yellow-900/20 p-3 rounded-lg">
-                  <Clock className="w-6 h-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">In Review</p>
-                  <p className="text-3xl text-orange-600" style={{ fontWeight: '700' }}>
-                    {complaints.filter(c => c.status === 'in_review').length}
-                  </p>
-                </div>
-                <div className="bg-orange-100 dark:bg-orange-900/20 p-3 rounded-lg">
-                  <AlertCircle className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Resolved</p>
-                  <p className="text-3xl text-green-600" style={{ fontWeight: '700' }}>
-                    {complaints.filter(c => c.status === 'resolved').length}
-                  </p>
-                </div>
-                <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
+        {/* Tabs above all content */}
         <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg mb-6">
           <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-civix-dark-brown/50 dark:text-civix-sandal/50 w-4 h-4" />
-                  <Input
-                    placeholder="Search by location or title..."
-                    value={searchLocation}
-                    onChange={(e) => setSearchLocation(e.target.value)}
-                    className="pl-10 border-civix-warm-beige dark:border-gray-600"
-                  />
-                </div>
-              </div>
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-full md:w-48 border-civix-warm-beige dark:border-gray-600">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="Infrastructure">Infrastructure</SelectItem>
-                  <SelectItem value="Roads">Roads</SelectItem>
-                  <SelectItem value="Environment">Environment</SelectItem>
-                  <SelectItem value="Vandalism">Vandalism</SelectItem>
-                  <SelectItem value="Sanitation">Sanitation</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full md:w-48 border-civix-warm-beige dark:border-gray-600">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
-                  <SelectItem value="in_review">In Review</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex gap-4 mb-4">
+              <Button
+                variant={activeTab === 'complaints' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('complaints')}
+                className="flex-1"
+              >
+                Complaints
+              </Button>
+              <Button
+                variant={activeTab === 'polls' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('polls')}
+                className="flex-1"
+              >
+                Polls
+              </Button>
+              <Button
+                variant={activeTab === 'petitions' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('petitions')}
+                className="flex-1"
+              >
+                Petitions
+              </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Complaints Table */}
-        <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl text-civix-dark-brown dark:text-civix-sandal">All Complaints</CardTitle>
-            <CardDescription className="text-civix-dark-brown/70 dark:text-civix-sandal/70">
-              Manage and assign complaints to volunteers
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-civix-civic-green" />
-                <span className="ml-2 text-civix-dark-brown dark:text-civix-sandal">Loading complaints...</span>
+        {/* Stats Cards for active tab */}
+        {activeTab === 'complaints' && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Total Complaints</p>
+                    <p className="text-3xl text-civix-civic-green" style={{ fontWeight: '700' }}>{complaints.length}</p>
+                  </div>
+                  <div className="bg-civix-civic-green/10 dark:bg-civix-civic-green/20 p-3 rounded-lg">
+                    <FileText className="w-6 h-6 text-civix-civic-green" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Pending</p>
+                    <p className="text-3xl text-yellow-600" style={{ fontWeight: '700' }}>
+                      {complaints.filter(c => c.status === 'received').length}
+                    </p>
+                  </div>
+                  <div className="bg-yellow-100 dark:bg-yellow-900/20 p-3 rounded-lg">
+                    <Clock className="w-6 h-6 text-yellow-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">In Review</p>
+                    <p className="text-3xl text-orange-600" style={{ fontWeight: '700' }}>
+                      {complaints.filter(c => c.status === 'in_review').length}
+                    </p>
+                  </div>
+                  <div className="bg-orange-100 dark:bg-orange-900/20 p-3 rounded-lg">
+                    <AlertCircle className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Resolved</p>
+                    <p className="text-3xl text-green-600" style={{ fontWeight: '700' }}>
+                      {complaints.filter(c => c.status === 'resolved').length}
+                    </p>
+                  </div>
+                  <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {activeTab === 'polls' && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Total Polls</p>
+                    <p className="text-3xl text-civix-civic-green" style={{ fontWeight: '700' }}>{polls.length}</p>
+                  </div>
+                  <div className="bg-civix-civic-green/10 dark:bg-civix-civic-green/20 p-3 rounded-lg">
+                    <FileText className="w-6 h-6 text-civix-civic-green" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Pending</p>
+                    <p className="text-3xl text-yellow-600" style={{ fontWeight: '700' }}>
+                      {polls.filter(p => p.status === 'received' || p.status === 'pending').length}
+                    </p>
+                  </div>
+                  <div className="bg-yellow-100 dark:bg-yellow-900/20 p-3 rounded-lg">
+                    <Clock className="w-6 h-6 text-yellow-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Active</p>
+                    <p className="text-3xl text-orange-600" style={{ fontWeight: '700' }}>
+                      {polls.filter(p => p.status === 'active' || p.status === 'in_review').length}
+                    </p>
+                  </div>
+                  <div className="bg-orange-100 dark:bg-orange-900/20 p-3 rounded-lg">
+                    <AlertCircle className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Completed</p>
+                    <p className="text-3xl text-green-600" style={{ fontWeight: '700' }}>
+                      {polls.filter(p => p.status === 'completed' || p.status === 'resolved').length}
+                    </p>
+                  </div>
+                  <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {activeTab === 'petitions' && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Total Petitions</p>
+                    <p className="text-3xl text-civix-civic-green" style={{ fontWeight: '700' }}>{petitions.length}</p>
+                  </div>
+                  <div className="bg-civix-civic-green/10 dark:bg-civix-civic-green/20 p-3 rounded-lg">
+                    <FileText className="w-6 h-6 text-civix-civic-green" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Pending</p>
+                    <p className="text-3xl text-yellow-600" style={{ fontWeight: '700' }}>
+                      {petitions.filter(p => p.status === 'received' || p.status === 'pending').length}
+                    </p>
+                  </div>
+                  <div className="bg-yellow-100 dark:bg-yellow-900/20 p-3 rounded-lg">
+                    <Clock className="w-6 h-6 text-yellow-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Active</p>
+                    <p className="text-3xl text-orange-600" style={{ fontWeight: '700' }}>
+                      {petitions.filter(p => p.status === 'active' || p.status === 'in_review').length}
+                    </p>
+                  </div>
+                  <div className="bg-orange-100 dark:bg-orange-900/20 p-3 rounded-lg">
+                    <AlertCircle className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-1">Completed</p>
+                    <p className="text-3xl text-green-600" style={{ fontWeight: '700' }}>
+                      {petitions.filter(p => p.status === 'completed' || p.status === 'resolved').length}
+                    </p>
+                  </div>
+                  <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Filters and search for each tab */}
+        {activeTab === 'complaints' && (
+          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg mb-6">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-civix-dark-brown/50 dark:text-civix-sandal/50 w-4 h-4" />
+                    <Input
+                      placeholder="Search by location or title..."
+                      value={searchLocation}
+                      onChange={(e) => setSearchLocation(e.target.value)}
+                      className="pl-10 border-civix-warm-beige dark:border-gray-600"
+                    />
+                  </div>
+                </div>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-full md:w-48 border-civix-warm-beige dark:border-gray-600">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                    <SelectItem value="Roads">Roads</SelectItem>
+                    <SelectItem value="Environment">Environment</SelectItem>
+                    <SelectItem value="Vandalism">Vandalism</SelectItem>
+                    <SelectItem value="Sanitation">Sanitation</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-full md:w-48 border-civix-warm-beige dark:border-gray-600">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="received">Received</SelectItem>
+                    <SelectItem value="in_review">In Review</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ) : (
+            </CardContent>
+          </Card>
+        )}
+        {activeTab === 'polls' && (
+          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg mb-6">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-civix-dark-brown/50 dark:text-civix-sandal/50 w-4 h-4" />
+                    <Input
+                      placeholder="Search by location or title..."
+                      value={searchLocation}
+                      onChange={(e) => setSearchLocation(e.target.value)}
+                      className="pl-10 border-civix-warm-beige dark:border-gray-600"
+                    />
+                  </div>
+                </div>
+                {/* You can add more filters for polls if needed */}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {activeTab === 'petitions' && (
+          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg mb-6">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-civix-dark-brown/50 dark:text-civix-sandal/50 w-4 h-4" />
+                    <Input
+                      placeholder="Search by location or title..."
+                      value={searchLocation}
+                      onChange={(e) => setSearchLocation(e.target.value)}
+                      className="pl-10 border-civix-warm-beige dark:border-gray-600"
+                    />
+                  </div>
+                </div>
+                {/* You can add more filters for petitions if needed */}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Complaints Table */}
+        {activeTab === 'complaints' && (
+          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl text-civix-dark-brown dark:text-civix-sandal">All Complaints</CardTitle>
+              <CardDescription className="text-civix-dark-brown/70 dark:text-civix-sandal/70">
+                Manage and assign complaints to volunteers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-civix-civic-green" />
+                  <span className="ml-2 text-civix-dark-brown dark:text-civix-sandal">Loading complaints...</span>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Assigned To</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredComplaints.map((complaint) => (
+                      <TableRow key={complaint._id}>
+                        <TableCell className="font-medium">{complaint.title}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="border-civix-dark-brown text-civix-dark-brown dark:border-civix-sandal dark:text-civix-sandal">
+                            {complaint.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <MapPin className="w-4 h-4 mr-1 text-civix-dark-brown/50 dark:text-civix-sandal/50" />
+                            {complaint.location}
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(complaint.status)}</TableCell>
+                        <TableCell>
+                          {complaint.assigned_to ? (
+                            <Badge className="bg-civix-civic-green text-white">
+                              {typeof complaint.assigned_to === 'string'
+                                ? complaint.assigned_to
+                                : complaint.assigned_to.name || 'Volunteer'}
+                            </Badge>
+                          ) : (
+                            <span className="text-civix-dark-brown/50 dark:text-civix-sandal/50">Unassigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1 text-civix-dark-brown/50 dark:text-civix-sandal/50" />
+                            {new Date(complaint.createdAt).toLocaleDateString()}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setDetailsComplaint(complaint);
+                                setViewDetailsDialogOpen(true);
+                              }}
+                              className="border-civix-civic-green text-civix-civic-green hover:bg-civix-civic-green hover:text-white"
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              View
+                            </Button>
+                            {!complaint.assigned_to && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedComplaint(complaint);
+                                  setAssignDialogOpen(true);
+                                }}
+                                className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white"
+                              >
+                                <UserPlus className="w-3 h-3 mr-1" />
+                                Assign
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Polls Table and Create Poll Button */}
+        {activeTab === 'polls' && (
+          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl text-civix-dark-brown dark:text-civix-sandal">All Polls</CardTitle>
+                  <CardDescription className="text-civix-dark-brown/70 dark:text-civix-sandal/70">
+                    View all submitted polls
+                  </CardDescription>
+                </div>
+                <Button onClick={() => setCreatePollOpen(true)} className="bg-civix-civic-green text-white">Create Poll</Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {polls.map((poll) => (
+                    <TableRow key={poll._id}>
+                      <TableCell>{poll.title}</TableCell>
+                      <TableCell>{poll.category}</TableCell>
+                      <TableCell>{poll.target_location}</TableCell>
+                      <TableCell>{poll.duration} hr</TableCell>
+                      <TableCell>{poll.status || 'active'}</TableCell>
+                      <TableCell>{poll.createdAt ? new Date(poll.createdAt).toLocaleDateString() : ''}</TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="outline">View Details</Button>
+                        {userRole === 'citizen' && (
+                          <Button size="sm" className="ml-2" onClick={() => handleVotePoll(poll._id)}>
+                            Vote
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Petitions Table and Create Petition Button */}
+        {activeTab === 'petitions' && (
+          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl text-civix-dark-brown dark:text-civix-sandal">All Petitions</CardTitle>
+                  <CardDescription className="text-civix-dark-brown/70 dark:text-civix-sandal/70">
+                    View all submitted petitions
+                  </CardDescription>
+                </div>
+                <Button onClick={() => setCreatePetitionOpen(true)} className="bg-civix-civic-green text-white">Create Petition</Button>
+              </div>
+            </CardHeader>
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -318,80 +780,175 @@ export default function AdminDashboard({ onNavigate, userName }: AdminDashboardP
                     <TableHead>Category</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Assigned To</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredComplaints.map((complaint) => (
-                    <TableRow key={complaint._id}>
-                      <TableCell className="font-medium">{complaint.title}</TableCell>
+                  {petitions.map((petition) => (
+                    <TableRow key={petition._id}>
+                      <TableCell>{petition.title}</TableCell>
+                      <TableCell>{petition.category}</TableCell>
+                      <TableCell>{petition.location}</TableCell>
+                      <TableCell>{petition.status}</TableCell>
+                      <TableCell>{petition.createdAt ? new Date(petition.createdAt).toLocaleDateString() : ''}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="border-civix-dark-brown text-civix-dark-brown dark:border-civix-sandal dark:text-civix-sandal">
-                          {complaint.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-1 text-civix-dark-brown/50 dark:text-civix-sandal/50" />
-                          {complaint.location}
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(complaint.status)}</TableCell>
-                      <TableCell>
-                        {complaint.assigned_to ? (
-                          <Badge className="bg-civix-civic-green text-white">
-                            {typeof complaint.assigned_to === 'string'
-                              ? complaint.assigned_to
-                              : complaint.assigned_to.name || 'Volunteer'}
-                          </Badge>
-                        ) : (
-                          <span className="text-civix-dark-brown/50 dark:text-civix-sandal/50">Unassigned</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1 text-civix-dark-brown/50 dark:text-civix-sandal/50" />
-                          {new Date(complaint.createdAt).toLocaleDateString()}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setDetailsComplaint(complaint);
-                              setViewDetailsDialogOpen(true);
-                            }}
-                            className="border-civix-civic-green text-civix-civic-green hover:bg-civix-civic-green hover:text-white"
-                          >
-                            <Eye className="w-3 h-3 mr-1" />
-                            View
+                        <Button size="sm" variant="outline" onClick={() => {
+                          setSelectedPetition(petition);
+                          setPetitionDetailsDialogOpen(true);
+                        }}>View Details</Button>
+                        {userRole === 'citizen' && (
+                          <Button size="sm" className="ml-2" onClick={() => handleSignPetition(petition._id)}>
+                            Sign
                           </Button>
-                          {!complaint.assigned_to && (
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setSelectedComplaint(complaint);
-                                setAssignDialogOpen(true);
-                              }}
-                              className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white"
-                            >
-                              <UserPlus className="w-3 h-3 mr-1" />
-                              Assign
-                            </Button>
-                          )}
-                        </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
+        {/* Petition Details Dialog (Admin) */}
+        <Dialog open={petitionDetailsDialogOpen} onOpenChange={setPetitionDetailsDialogOpen}>
+          <DialogContent className="bg-white dark:bg-gray-800 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-civix-dark-brown dark:text-civix-sandal">Petition Details</DialogTitle>
+            </DialogHeader>
+            {selectedPetition && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-civix-dark-brown dark:text-civix-sandal mb-2">
+                    {selectedPetition.title}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                    <Badge variant="outline" className="border-civix-dark-brown text-civix-dark-brown dark:border-civix-sandal dark:text-civix-sandal">
+                      {selectedPetition.category}
+                    </Badge>
+                    <span className="ml-2">Status: {selectedPetition.status}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-civix-dark-brown dark:text-civix-sandal">Description</Label>
+                  <p className="text-civix-dark-brown/80 dark:text-civix-sandal/80 mt-1">
+                    {selectedPetition.description}
+                  </p>
+                </div>
+                <div className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-1 text-civix-dark-brown/50 dark:text-civix-sandal/50" />
+                  <span className="text-civix-dark-brown dark:text-civix-sandal">{selectedPetition.location}</span>
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="w-4 h-4 mr-1 text-civix-dark-brown/50 dark:text-civix-sandal/50" />
+                  <span className="text-civix-dark-brown/70 dark:text-civix-sandal/70">
+                    Submitted: {selectedPetition.createdAt ? new Date(selectedPetition.createdAt).toLocaleDateString() : ''}
+                  </span>
+                </div>
+                {/* Comments Section */}
+                <div className="mt-8">
+                  <h4 className="text-lg font-semibold mb-2">Comments</h4>
+                  <div className="space-y-2 mb-4">
+                    {petitionComments.length === 0 && <div className="text-gray-500">No comments yet.</div>}
+                    {petitionComments.map((c, idx) => (
+                      <div key={idx} className="bg-gray-100 dark:bg-gray-700 rounded p-2">
+                        <span className="font-semibold">{c.by?.name || c.by || 'User'}:</span> {c.text}
+                        <span className="ml-2 text-xs text-gray-400">{c.at ? new Date(c.at).toLocaleString() : ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add a comment..."
+                      value={adminComment}
+                      onChange={e => setAdminComment(e.target.value)}
+                      disabled={adminCommentLoading || resolving}
+                    />
+                    <Button onClick={handleAdminComment} disabled={adminCommentLoading || !adminComment.trim()}>
+                      {adminCommentLoading ? 'Posting...' : 'Post'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                onClick={() => setPetitionDetailsDialogOpen(false)}
+                className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white"
+                variant="outline"
+              >
+                Close
+              </Button>
+              <Button
+                onClick={handleResolvePetition}
+                disabled={resolving || !selectedPetition}
+                className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white"
+              >
+                {resolving ? 'Resolving...' : 'Resolve Petition'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        )}
+        {/* Create Poll Dialog */}
+        <Dialog open={createPollOpen} onOpenChange={setCreatePollOpen}>
+          <DialogContent className="bg-white dark:bg-gray-800 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-civix-dark-brown dark:text-civix-sandal">Create Poll</DialogTitle>
+            </DialogHeader>
+            {/* Dynamically import CreatePollForm to avoid circular imports */}
+            {createPollOpen && (
+              <React.Suspense fallback={<div>Loading...</div>}>
+                {React.createElement(
+                  React.lazy(() => import("./PollComponents").then(mod => ({ default: mod.CreatePollForm }))),
+                  {
+                    onClose: () => setCreatePollOpen(false),
+                    onPollCreated: async () => {
+                      // Reload polls after creation
+                      try {
+                        // @ts-ignore
+                        const { getPolls } = await import("@/lib/api").then(mod => mod.pollsAPI);
+                        const data = await getPolls();
+                        setPolls(Array.isArray(data) ? data : (data.polls || []));
+                      } catch (err) {
+                        toast.error("Failed to reload polls");
+                      }
+                    }
+                  }
+                )}
+              </React.Suspense>
             )}
-          </CardContent>
-        </Card>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Petition Dialog */}
+        <Dialog open={createPetitionOpen} onOpenChange={setCreatePetitionOpen}>
+          <DialogContent className="bg-white dark:bg-gray-800 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-civix-dark-brown dark:text-civix-sandal">Create Petition</DialogTitle>
+            </DialogHeader>
+            {createPetitionOpen && (
+              <React.Suspense fallback={<div>Loading...</div>}>
+                {React.createElement(
+                  React.lazy(() => import("./PetitionComponents").then(mod => ({ default: mod.CreatePetitionForm }))),
+                  {
+                    onClose: () => setCreatePetitionOpen(false),
+                    onPetitionCreated: async () => {
+                      // Reload petitions after creation
+                      try {
+                        // @ts-ignore
+                        const { getPetitions } = await import("@/lib/api").then(mod => mod.petitionsAPI);
+                        const data = await getPetitions();
+                        setPetitions(Array.isArray(data) ? data : (data.petitions || []));
+                      } catch (err) {
+                        toast.error("Failed to reload petitions");
+                      }
+                    }
+                  }
+                )}
+              </React.Suspense>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Assign Dialog */}
         <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>

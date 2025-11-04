@@ -10,6 +10,8 @@ const UserSchema = new mongoose.Schema({
     required: true,
   },
   location: { type: String },
+  latitude: { type: Number, required: false },
+  longitude: { type: Number, required: false },
   resetToken: { type: String, default: null },
   resetTokenExpiry: { type: Date, default: null },
 });
