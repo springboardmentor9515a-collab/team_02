@@ -70,7 +70,7 @@ function Calendar({
       components={{
         Dropdown: ({ ...props }) => {
           const { goToMonth } = useNavigation()
-          const { month } = useDayPicker()
+          const { month } = useDayPicker() as any
 
           if (props.name === "months") {
             const months = Array.from({ length: 12 }, (_, i) => new Date(2000, i))

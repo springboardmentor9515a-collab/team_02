@@ -27,24 +27,42 @@ router.post(
 );
 
 // PUT /api/petitions/:id/resolve - Admin resolves petition
-router.put(":id/resolve", protect, authorize("admin"), async (req, res) => {
+router.put("/:id/resolve", protect, authorize("admin"), async (req, res) => {
   try {
+    const { comment } = req.body;
     const petition = await Petition.findById(req.params.id);
+
     if (!petition)
       return res.status(404).json({ message: "Petition not found" });
+
     petition.status = "resolved";
     petition.resolved = true;
+
+    // Add resolution comment if provided
+    if (comment) {
+      petition.comments.push({
+        by: req.user._id,
+        text: comment,
+        isResolutionComment: true,
+      });
+    }
+
     petition.status_history.push({
       status: "resolved",
       by: req.user._id,
-      note: req.body.note,
+      note: comment || "Petition resolved by admin",
     });
-    // If admin provided a comment, add it to comments array
-    if (req.body.comment && req.body.comment.trim()) {
-      petition.comments.push({ by: req.user._id, text: req.body.comment });
-    }
+
     await petition.save();
-    res.json({ success: true, petition });
+
+    // Populate user info for comments
+    await petition.populate("comments.by", "name email role");
+
+    res.json({
+      success: true,
+      petition,
+      message: "Petition resolved successfully",
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

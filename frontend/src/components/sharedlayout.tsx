@@ -35,13 +35,17 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children, activePage, onNav
                 {sidebarItems.map(item => (
                   <button 
                     key={item.id}
-                    onClick={() => onNavigate(item.page)}
+                    onClick={() => {
+                      onNavigate(item.page);
+                      setIsMobileMenuOpen(false); // Close mobile menu after navigation
+                    }}
                     className={`${
                       activePage === item.page
                         ? "text-civix-civic-green border-b-2 border-civix-civic-green"
                         : "text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green"
-                    } transition-colors pb-1`}
+                    } transition-colors pb-1 flex items-center gap-2`}
                   >
+                    <item.icon className="h-4 w-4" />
                     {item.label === 'My Petitions' ? 'Petitions' : item.label}
                   </button>
                 ))}
