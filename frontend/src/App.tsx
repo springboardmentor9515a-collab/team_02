@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Page, UserData } from "@/types";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
+
 // --- COMPONENT IMPORTS ---
 // CORRECTED: Filename casing for LandingPage must be exact.
 import LandingPage from "@/components/pages/Landingpage"; // Changed to uppercase 'L'
@@ -13,7 +14,6 @@ import LoginPage from "@/components/pages/LoginPage";
 import Dashboard from "@/components/pages/Dashboard";
 import PetitionsModule from "@/components/pages/PetitionsModule";
 import PollsModule from "@/components/pages/pollsmodule";
-import ReportsModule from "@/components/pages/ReportsModule";
 import ComplaintsModule from "@/components/pages/ComplaintsModule";
 import AdminDashboard from "@/components/pages/AdminDashboard";
 import VolunteerDashboard from "@/components/pages/VolunteerDashboard";
@@ -21,10 +21,16 @@ import VolunteerDashboard from "@/components/pages/VolunteerDashboard";
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('landing');
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [refreshCounter, setRefreshCounter] = useState(0);
   const { user, login, logout } = useAuth();
 
   const navigate = (page: Page, itemId?: string) => {
-    setCurrentPage(page);
+    // If navigating to the same page, bump refreshCounter so page modules can reload data
+    if (page === currentPage) {
+      setRefreshCounter((c) => c + 1);
+    } else {
+      setCurrentPage(page);
+    }
     setSelectedItemId(itemId || null);
   };
 
@@ -52,11 +58,9 @@ function AppContent() {
       case 'dashboard':
         return <Dashboard onNavigate={navigate} userName={user?.fullName || 'User'} />;
       case 'petitions':
-        return <PetitionsModule onNavigate={navigate} selectedItemId={selectedItemId} userName={user?.fullName || 'User'} />;
+        return <PetitionsModule onNavigate={navigate} selectedItemId={selectedItemId} userName={user?.fullName || 'User'} refreshCounter={refreshCounter} />;
       case 'polls':
         return <PollsModule onNavigate={navigate} selectedItemId={selectedItemId} userName={user?.fullName || 'User'} />;
-      case 'reports':
-        return <ReportsModule onNavigate={navigate} selectedItemId={selectedItemId} userName={user?.fullName || 'User'} />;
       case 'complaints':
         return <ComplaintsModule onNavigate={navigate} userName={user?.fullName || 'User'} />;
       case 'admin':

@@ -251,9 +251,9 @@ export function PollList() {
     }
   };
 
-  const handleVote = async (pollId: string, optionIndex: number) => {
+  const handleVote = async (pollId: string, selectedOption: string) => {
     try {
-      await pollsAPI.vote(pollId, optionIndex);
+      await pollsAPI.vote(pollId, selectedOption);
       toast.success('Vote recorded successfully');
       await loadPolls(); // Reload polls to get updated vote counts
     } catch (error) {
@@ -281,7 +281,7 @@ export function PollList() {
                   key={index}
                   variant="outline"
                   className="w-full justify-between"
-                  onClick={() => handleVote(poll._id, index)}
+                  onClick={() => handleVote(poll._id, option)}
                 >
                   <span>{option}</span>
                   {/* You can add vote count here if available in your API response */}

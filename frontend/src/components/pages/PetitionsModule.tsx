@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
   Home, 
   FileText, 
@@ -37,6 +38,7 @@ interface PetitionsModuleProps {
   onNavigate: (page: Page, itemId?: string) => void;
   selectedItemId?: string | null;
   userName: string;
+  refreshCounter?: number;
 }
 
 import { CreatePetitionForm, PetitionList } from './PetitionComponents';
@@ -58,7 +60,7 @@ interface Petition {
   isSignedByUser: boolean;
 }
 
-export default function PetitionsModule({ onNavigate, selectedItemId, userName }: PetitionsModuleProps) {
+export default function PetitionsModule({ onNavigate, selectedItemId, userName, refreshCounter }: PetitionsModuleProps) {
   const [activeSection, setActiveSection] = useState('petitions');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,13 +76,27 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName }
     // eslint-disable-next-line
   }, []);
 
-  const sidebarItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home, onClick: () => onNavigate('dashboard') },
-    { id: 'petitions', label: 'Petitions', icon: FileText, onClick: () => setActiveSection('petitions') },
-    { id: 'polls', label: 'Polls & Voting', icon: Vote, onClick: () => onNavigate('polls') },
-    { id: 'reports', label: 'Reports', icon: BarChart3, onClick: () => onNavigate('reports') },
-    { id: 'messages', label: 'Messages', icon: MessageSquare, onClick: () => onNavigate('messages') }
-  ];
+  // If parent requests a refresh (e.g., clicking the nav again), reload petitions
+  useEffect(() => {
+    if (typeof refreshCounter !== 'undefined') {
+      reloadPetitions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshCounter]);
+
+  const handleTabChange = (value: string) => {
+    if (value === 'dashboard') {
+      onNavigate('dashboard');
+    } else if (value === 'polls') {
+      onNavigate('polls');
+    } else if (value === 'reports') {
+      onNavigate('reports');
+    } else if (value === 'messages') {
+      onNavigate('messages');
+    } else {
+      setActiveSection(value);
+    }
+  };
 
   const filteredPetitions = Array.isArray(petitions) ? petitions.filter(petition => {
     if (!petition || !petition.title || !petition.summary || !petition.category || !petition.status) return false;
@@ -299,7 +315,36 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-civix-sandal to-civix-warm-beige dark:from-gray-900 dark:to-gray-800">
-      {viewMode === 'list' ? listView : <PetitionDetail petition={selectedPetition} />}
+      <Tabs defaultValue="petitions" className="w-full" onValueChange={handleTabChange}>
+        <div className="border-b">
+          <TabsList className="flex justify-center space-x-2 p-4">
+            <TabsTrigger value="dashboard" className="flex items-center">
+              <Home className="w-4 h-4 mr-2" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="petitions" className="flex items-center">
+              <FileText className="w-4 h-4 mr-2" />
+              Petitions
+            </TabsTrigger>
+            <TabsTrigger value="polls" className="flex items-center">
+              <Vote className="w-4 h-4 mr-2" />
+              Polls & Voting
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Reports
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="flex items-center">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Messages
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="petitions" className="mt-0">
+          {viewMode === 'list' ? listView : <PetitionDetail petition={selectedPetition} />}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

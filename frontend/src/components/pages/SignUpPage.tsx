@@ -154,10 +154,13 @@ export default function SignUpPage({ onNavigate, onSignUp }: SignUpPageProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName: formData.fullName,
+          name: formData.fullName,
           email: formData.email,
           location: formData.location,
           password: formData.password,
+          role: 'citizen', // Default role for signup
+          latitude: detectedInfo.lat,
+          longitude: detectedInfo.lon,
         }),
       });
 

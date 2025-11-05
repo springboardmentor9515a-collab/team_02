@@ -66,6 +66,12 @@ export interface Petition {
   signatureGoal: number;
   status: string;
   creator: string;
+    signatures?: Array<{
+      name: string;
+      email: string;
+      comment?: string;
+      date: string;
+    }>;
 }
 
 export interface Complaint {
@@ -79,6 +85,12 @@ export interface Complaint {
   assigned_to?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SignPetitionData {
+  name: string;
+  email: string;
+  comment?: string;
 }
 
 export interface CreateComplaintData {
@@ -305,8 +317,8 @@ export const petitionsAPI = {
     return response.data;
   },
 
-  signPetition: async (petitionId: string) => {
-    const response = await api.post(`/petitions/${petitionId}/sign`);
+  signPetition: async (petitionId: string, data?: SignPetitionData) => {
+    const response = await api.post(`/petitions/${petitionId}/sign`, data || {});
     return response.data;
   },
 };
@@ -320,11 +332,16 @@ export const reportsAPI = {
     return response.data;
   },
 
-  exportReports: async (format: "csv" | "pdf" = "csv") => {
+  exportReports: async (format: "csv" | "pdf" = "csv", type?: string) => {
     const response = await api.get(`/reports/export`, {
-      params: { format },
+      params: { format, type },
       responseType: "blob",
     });
+    return response.data;
+  },
+
+  getSentimentAnalysis: async () => {
+    const response = await api.get("/reports/sentiment");
     return response.data;
   },
 };
