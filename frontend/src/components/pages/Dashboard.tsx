@@ -38,31 +38,13 @@ import {
   ChevronRight
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { petitionsAPI, pollsAPI } from '@/lib/api';
-// Temporary mock data for Official Updates (replace with backend data when available)
-const mockOfficialUpdates = [
-  {
-    id: 1,
-    official: 'Jane Doe',
-    avatar: '/api/placeholder/40/40',
-    title: 'New Community Center Opening',
-    content: 'We are excited to announce the opening of the new community center next month. Join us for the grand opening event!',
-    timestamp: '2 days ago'
-  },
-  {
-    id: 2,
-    official: 'John Smith',
-    avatar: '/api/placeholder/40/40',
-    title: 'Water Supply Update',
-    content: 'Scheduled maintenance will affect water supply in some areas this weekend. Please plan accordingly.',
-    timestamp: '5 hours ago'
-  }
-];
+import { petitionsAPI, pollsAPI, userAPI, complaintsAPI } from '@/lib/api';
+
 import ThemeToggle from "./ThemeToggle";
 import { toast } from "sonner";
 
 interface DashboardProps {
-  onNavigate: (page: 'landing' | 'petitions' | 'polls' | 'reports' | 'messages' | 'complaints' | 'admin' | 'volunteer') => void;
+  onNavigate: (page: 'landing' | 'petitions' | 'polls'  | 'complaints' | 'admin' | 'volunteer') => void;
   userName: string;
 }
 
@@ -75,33 +57,67 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [emailNotifications, setEmailNotifications] = useState(true);
 
-  // State for real petitions and polls
+    // State for real petitions, polls, and complaints
   const [petitions, setPetitions] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [volunteerCount, setVolunteerCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      console.log('Fetching dashboard data...');
+      
+      // Fetch each data source separately to identify which one might fail
       try {
-        const [petitionsData, pollsData] = await Promise.all([
-          petitionsAPI.getPetitions(),
-          pollsAPI.getPolls()
-        ]);
-        setPetitions(Array.isArray(petitionsData) ? petitionsData : (petitionsData.petitions || []));
-        setPolls(Array.isArray(pollsData) ? pollsData : (pollsData.polls || []));
-      } catch (err) {
-        toast.error('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
+        const petitionsData = await petitionsAPI.getAllPetitions(); // Note: Changed to getAllPetitions
+        console.log('Petitions data:', petitionsData);
+        setPetitions(Array.isArray(petitionsData) ? petitionsData : (petitionsData?.petitions || []));
+      } catch (error) {
+        console.error('Failed to fetch petitions:', error);
+        toast.error('Failed to load petitions');
       }
-    };
+
+      try {
+        const pollsData = await pollsAPI.getAllPolls(); // Note: Changed to getAllPolls
+        console.log('Polls data:', pollsData);
+        setPolls(Array.isArray(pollsData) ? pollsData : (pollsData?.polls || []));
+      } catch (error) {
+        console.error('Failed to fetch polls:', error);
+        toast.error('Failed to load polls');
+      }
+
+      try {
+        const volunteerStatsData = await userAPI.getVolunteerStats();
+        console.log('Volunteer stats:', volunteerStatsData);
+        setVolunteerCount(volunteerStatsData?.totalVolunteers || 0);
+      } catch (error) {
+        console.error('Failed to fetch volunteer stats:', error);
+        toast.error('Failed to load volunteer statistics');
+      }
+
+      try {
+        const complaintsData = await complaintsAPI.getAllComplaints();
+        console.log('Complaints data:', complaintsData);
+        setComplaints(Array.isArray(complaintsData) ? complaintsData : []);
+      } catch (error) {
+        console.error('Failed to fetch complaints:', error);
+        toast.error('Failed to load complaints');
+      }
+
+    } catch (err) {
+      console.error('Overall fetch error:', err);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
-  // Mock data for official updates
-  
-  // Volunteer work categories
   const volunteerCategories = [
     { id: 'event-help', name: 'Event Help', icon: PartyPopper, description: 'Assist with community events and gatherings' },
     { id: 'technical-support', name: 'Technical Support', icon: Wrench, description: 'Help with tech-related issues and infrastructure' },
@@ -110,6 +126,34 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
     { id: 'education', name: 'Education & Tutoring', icon: GraduationCap, description: 'Support educational programs and mentoring' },
     { id: 'health-wellness', name: 'Health & Wellness', icon: Heart, description: 'Promote health initiatives and wellness programs' },
     { id: 'administrative', name: 'Administrative Support', icon: Briefcase, description: 'Help with paperwork and organizational tasks' }
+  ];
+
+  // Mock official updates (used in Official Updates section)
+  const mockOfficialUpdates = [
+    {
+      id: 'update-1',
+      official: 'City Council',
+      title: 'New Parking Regulations',
+      content: 'The City Council approved new parking regulations for downtown beginning next month. Please review the changes and provide feedback.',
+      avatar: '/api/placeholder/40/40',
+      timestamp: '2 days ago'
+    },
+    {
+      id: 'update-2',
+      official: 'Public Works',
+      title: 'Roadworks on Main St.',
+      content: 'Road maintenance will begin on Main St. Expect traffic diversions between 9am and 4pm for the next two weeks.',
+      avatar: '/api/placeholder/40/40',
+      timestamp: '1 week ago'
+    },
+    {
+      id: 'update-3',
+      official: 'Mayor Office',
+      title: 'Community Townhall',
+      content: "Join the Mayor for a community townhall to discuss neighborhood safety and development plans.",
+      avatar: '/api/placeholder/40/40',
+      timestamp: '3 weeks ago'
+    }
   ];
 
   const handleCategoryToggle = (categoryId: string) => {
@@ -140,12 +184,10 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
 
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, onClick: () => setActiveSection('dashboard') },
-    { id: 'petitions', label: 'My Petitions', icon: FileText, onClick: () => onNavigate('petitions') },
+    { id: 'petitions', label: 'Petitions', icon: FileText, onClick: () => onNavigate('petitions') },
     { id: 'polls', label: 'Polls & Voting', icon: Vote, onClick: () => onNavigate('polls') },
-    { id: 'complaints', label: 'My Complaints', icon: AlertTriangle, onClick: () => onNavigate('complaints') },
-    { id: 'reports', label: 'Reports', icon: BarChart3, onClick: () => onNavigate('reports') },
-    { id: 'messages', label: 'Messages', icon: MessageSquare, onClick: () => onNavigate('messages') }
-  ];
+    { id: 'complaints', label: 'Complaints', icon: AlertTriangle, onClick: () => onNavigate('complaints') },
+ ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-civix-sandal to-civix-warm-beige dark:from-gray-900 dark:to-gray-800">
@@ -166,7 +208,7 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                 <a href="#" className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors">Home</a>
                 <a href="#" className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors">Petitions</a>
                 <a href="#" className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors">Polls</a>
-                <a href="#" className="text-civix-dark-brown dark:text-civix-sandal hover:text-civix-civic-green transition-colors">Reports</a>
+                
               </nav>
             </div>
 
@@ -186,7 +228,7 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                 </Avatar>
                 <div className="hidden md:block min-w-0 max-w-[150px]">
                   <p className="text-sm text-civix-dark-brown dark:text-civix-sandal truncate" style={{ fontWeight: '600' }}>{userName}</p>
-                  <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60 truncate">Civic Member</p>
+                  <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60 truncate">Civic Member </p>
                 </div>
                 <Button 
                   variant="ghost" 
@@ -232,23 +274,167 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
             {/* This Month Stats */}
             <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader>
-                <CardTitle className="text-lg text-civix-dark-brown dark:text-civix-sandal">This Month</CardTitle>
+                <CardTitle className="text-lg text-civix-dark-brown dark:text-civix-sandal flex items-center justify-between">
+                  <span>This Month ({new Date().toLocaleString('default', { month: 'long' })})</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-civix-dark-brown/70 dark:text-civix-sandal/70 hover:text-civix-civic-green"
+                    onClick={() => {
+                      setLoading(true);
+                      fetchData();
+                    }}
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                  </Button>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>147</div>
-                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Petitions Created</div>
+                  {/* Petitions Section */}
+                  <div>
+                    <div className="text-center mb-2">
+                      <div className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>
+                        {loading ? (
+                          <div className="h-8 w-16 mx-auto bg-civix-civic-green/20 animate-pulse rounded" />
+                        ) : (
+                          petitions.filter(p => {
+                            const createdDate = new Date(p.createdAt);
+                            const now = new Date();
+                            return createdDate.getMonth() === now.getMonth() && 
+                                   createdDate.getFullYear() === now.getFullYear();
+                          }).length
+                        )}
+                      </div>
+                      <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">New Petitions</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg text-civix-civic-green" style={{ fontWeight: '600' }}>
+                        {loading ? (
+                          <div className="h-6 w-12 mx-auto bg-civix-civic-green/20 animate-pulse rounded" />
+                        ) : (
+                          (() => {
+                            const thisMonthPetitions = petitions.filter(p => {
+                              const date = new Date(p.createdAt);
+                              const now = new Date();
+                              return date.getMonth() === now.getMonth() && 
+                                     date.getFullYear() === now.getFullYear();
+                            });
+                            const signedPetitions = thisMonthPetitions.filter(p => 
+                              (p.signatures?.length || 0) > 0
+                            );
+                            return `${thisMonthPetitions.length > 0 
+                              ? Math.round((signedPetitions.length / thisMonthPetitions.length) * 100)
+                              : 0}%`;
+                          })()
+                        )}
+                      </div>
+                      <div className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Petition Participation</div>
+                    </div>
                   </div>
+
                   <Separator />
+
+                  {/* Complaints Section */}
                   <div className="text-center">
-                    <div className="text-2xl text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '700' }}>23</div>
-                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Official Responses</div>
+                    <div className="text-2xl text-orange-500" style={{ fontWeight: '700' }}>
+                      {loading ? (
+                        <div className="h-8 w-16 mx-auto bg-orange-500/20 animate-pulse rounded" />
+                      ) : (
+                        complaints?.filter(c => {
+                          const date = new Date(c.createdAt);
+                          const now = new Date();
+                          return date.getMonth() === now.getMonth() && 
+                                 date.getFullYear() === now.getFullYear();
+                        })?.length || 0
+                      )}
+                    </div>
+                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70 mb-2">New Complaints</div>
+                    <div className="text-lg text-orange-500" style={{ fontWeight: '600' }}>
+                      {loading ? (
+                        <div className="h-6 w-12 mx-auto bg-orange-500/20 animate-pulse rounded" />
+                      ) : (
+                        complaints?.filter(c => {
+                          const date = new Date(c.updatedAt);
+                          const now = new Date();
+                          return c.status === 'resolved' && 
+                                 date.getMonth() === now.getMonth() && 
+                                 date.getFullYear() === now.getFullYear();
+                        })?.length || 0
+                      )}
+                    </div>
+                    <div className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Resolved This Month</div>
                   </div>
+
                   <Separator />
+
+                  {/* Polls Section */}
+                  <div>
+                    <div className="text-center mb-2">
+                      <div className="text-2xl text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '700' }}>
+                        {loading ? (
+                          <div className="h-8 w-16 mx-auto bg-civix-dark-brown/20 dark:bg-civix-sandal/20 animate-pulse rounded" />
+                        ) : (
+                          polls.filter(p => {
+                            const date = new Date(p.createdAt);
+                            const now = new Date();
+                            return date.getMonth() === now.getMonth() && 
+                                   date.getFullYear() === now.getFullYear();
+                          }).length
+                        )}
+                      </div>
+                      <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">New Polls</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg text-civix-dark-brown dark:text-civix-sandal" style={{ fontWeight: '600' }}>
+                        {loading ? (
+                          <div className="h-6 w-12 mx-auto bg-civix-dark-brown/20 dark:bg-civix-sandal/20 animate-pulse rounded" />
+                        ) : (
+                          (() => {
+                            const thisMonthPolls = polls.filter(p => {
+                              const date = new Date(p.createdAt);
+                              const now = new Date();
+                              return date.getMonth() === now.getMonth() && 
+                                     date.getFullYear() === now.getFullYear();
+                            });
+                            const pollsWithVotes = thisMonthPolls.filter(p => p.totalVotes > 0);
+                            return `${thisMonthPolls.length > 0 
+                              ? Math.round((pollsWithVotes.length / thisMonthPolls.length) * 100)
+                              : 0}%`;
+                          })()
+                        )}
+                      </div>
+                      <div className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Poll Participation</div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Response Rate */}
                   <div className="text-center">
-                    <div className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>89%</div>
-                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Citizen Participation</div>
+                    <div className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>
+                      {loading ? (
+                        <div className="h-8 w-16 mx-auto bg-civix-civic-green/20 animate-pulse rounded" />
+                      ) : (
+                        (() => {
+                          const thisMonthItems = [...petitions, ...(complaints || [])].filter(item => {
+                            const date = new Date(item.createdAt);
+                            const now = new Date();
+                            return date.getMonth() === now.getMonth() && 
+                                   date.getFullYear() === now.getFullYear();
+                          });
+                          
+                          const respondedItems = thisMonthItems.filter(item => 
+                            item.status === 'resolved' || item.official_response
+                          );
+                          
+                          return `${thisMonthItems.length > 0 
+                            ? Math.round((respondedItems.length / thisMonthItems.length) * 100)
+                            : 0}%`;
+                        })()
+                      )}
+                    </div>
+                    <div className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Official Response Rate</div>
                   </div>
                 </div>
               </CardContent>
@@ -274,112 +460,67 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6">
-                {/* Overview Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                  <div 
-                    className="bg-gradient-to-br from-civix-civic-green/10 to-civix-civic-green/5 dark:from-civix-civic-green/20 dark:to-civix-civic-green/10 p-6 rounded-lg border border-civix-civic-green/20 cursor-pointer hover:shadow-md transition-shadow"
+                {/* Overview Cards - redesigned: 3 consistent tiles with counts */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                  {/* Total Petitions */}
+                  <div
                     onClick={() => onNavigate('petitions')}
+                    className="p-6 rounded-lg border border-civix-civic-green/20 bg-gradient-to-br from-civix-civic-green/10 to-civix-civic-green/5 dark:from-civix-civic-green/20 dark:to-civix-civic-green/10 cursor-pointer hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 space-y-1">
+                      <div className="flex-1 min-w-0">
                         <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Total Petitions</p>
-                        <p className="text-2xl text-civix-civic-green" style={{ fontWeight: '700' }}>12</p>
-                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">3 signed this week</p>
+                        <div className="text-2xl text-civix-civic-green" style={{ fontWeight: 700 }}>{petitions ? petitions.length : 0}</div>
+                        <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Active & tracked petitions</p>
                       </div>
                       <div className="bg-civix-civic-green/20 p-2 rounded-lg shrink-0">
-                        <FileText className="w-5 h-5 text-civix-civic-green" />
+                        <FileText className="w-6 h-6 text-civix-civic-green" />
                       </div>
                     </div>
                   </div>
 
-                  <div 
-                    className="bg-gradient-to-br from-civix-dark-brown/10 to-civix-dark-brown/5 dark:from-civix-sandal/20 dark:to-civix-sandal/10 p-6 rounded-lg border border-civix-dark-brown/20 dark:border-civix-sandal/20 cursor-pointer hover:shadow-md transition-shadow"
+                  {/* Polls & Voting */}
+                  <div
                     onClick={() => onNavigate('polls')}
+                    className="p-6 rounded-lg border border-civix-dark-brown/20 dark:border-civix-sandal/20 bg-gradient-to-br from-civix-dark-brown/10 to-civix-dark-brown/5 dark:from-civix-sandal/20 dark:to-civix-sandal/10 cursor-pointer hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 space-y-1">
-                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Active Polls</p>
-                        <p className="text-2xl text-civix-dark-green dark:text-civix-sandal" style={{ fontWeight: '700' }}>8</p>
-                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">2 voted today</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Public Polls</p>
+                        <div className="text-2xl text-civix-dark-brown" style={{ fontWeight: 700 }}>{polls ? polls.length : 0}</div>
+                        <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Ongoing public sentiment polls</p>
                       </div>
                       <div className="bg-civix-dark-brown/20 dark:bg-civix-sandal/20 p-2 rounded-lg shrink-0">
-                        <Vote className="w-5 h-5 text-civix-dark-brown dark:text-civix-sandal" />
+                        <Vote className="w-6 h-6 text-civix-dark-brown dark:text-civix-sandal" />
                       </div>
                     </div>
                   </div>
 
-                  <div 
-                    className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 dark:from-orange-500/20 dark:to-orange-500/10 p-6 rounded-lg border border-orange-500/20 cursor-pointer hover:shadow-md transition-shadow"
+                  {/* My Complaints */}
+                  <div
                     onClick={() => onNavigate('complaints')}
+                    className="p-6 rounded-lg border border-orange-500/20 bg-gradient-to-br from-orange-500/10 to-orange-500/5 dark:from-orange-500/20 dark:to-orange-500/10 cursor-pointer hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 space-y-1">
+                      <div className="flex-1 min-w-0">
                         <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">My Complaints</p>
-                        <p className="text-2xl text-orange-500" style={{ fontWeight: '700' }}>4</p>
-                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">2 assigned</p>
+                        {/* No complaints state available here; show placeholder 0 */}
+                        <div className="text-2xl text-civix-dark-brown" style={{ fontWeight: 700 }}>0</div>
+                        <p className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">Submitted by you</p>
                       </div>
                       <div className="bg-orange-500/20 p-2 rounded-lg shrink-0">
-                        <AlertTriangle className="w-5 h-5 text-orange-500" />
+                        <AlertTriangle className="w-6 h-6 text-orange-500" />
                       </div>
                     </div>
                   </div>
 
-                  <div 
-                    className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 dark:from-blue-500/20 dark:to-blue-500/10 p-6 rounded-lg border border-blue-500/20 cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => onNavigate('messages')}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 space-y-1">
-                        <p className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Messages</p>
-                        <p className="text-2xl text-blue-500" style={{ fontWeight: '700' }}>4</p>
-                        <p className="text-xs text-civix-dark-brown/60 dark:text-civix-sandal/60">1 unread</p>
-                      </div>
-                      <div className="bg-blue-500/20 p-2 rounded-lg shrink-0">
-                        <MessageSquare className="w-5 h-5 text-blue-500" />
-                      </div>
-                    </div>
-                  </div>
+
                 </div>
 
-                <Separator className="my-6" />
+           
 
-                {/* Quick Access Buttons */}
-                <div>
-                  <h4 className="text-lg text-civix-dark-brown dark:text-civix-sandal mb-4" style={{ fontWeight: '600' }}>Quick Actions</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Button 
-                      onClick={() => onNavigate('petitions')}
-                      className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                    >
-                      <FileText className="w-6 h-6 shrink-0" />
-                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>Create Petition</span>
-                    </Button>
-
-                    <Button 
-                      onClick={() => onNavigate('complaints')}
-                      className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                    >
-                      <AlertTriangle className="w-6 h-6 shrink-0" />
-                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>Submit Complaint</span>
-                    </Button>
-
-                    <Button 
-                      onClick={() => onNavigate('polls')}
-                      className="bg-gradient-to-r from-civix-civic-green to-civix-dark-brown text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                    >
-                      <Vote className="w-6 h-6 shrink-0" />
-                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>Start Poll</span>
-                    </Button>
-
-                    <Button 
-                      onClick={() => onNavigate('messages')}
-                      className="bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white p-4 h-auto flex flex-col items-center space-y-2 hover:opacity-90"
-                    >
-                      <MessageSquare className="w-6 h-6 shrink-0" />
-                      <span className="text-sm text-center w-full" style={{ fontWeight: '600' }}>View Messages</span>
-                    </Button>
-                  </div>
-                </div>
+               
+               
               </CardContent>
             </Card>
 {/* Admin & Volunteer Access Container */}
@@ -406,7 +547,7 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                 Admin Dashboard
               </h4>
               <p className="text-sm text-white/90 transition-all duration-300 group-hover:text-white">
-                Manage all complaints & assign volunteers
+                Manage all issues & assign volunteers
               </p>
             </div>
           </div>
@@ -427,7 +568,7 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                 Volunteer Dashboard
               </h4>
               <p className="text-sm text-white/90 transition-all duration-300 group-hover:text-white">
-                View & update assigned complaints
+                View & update assigned issues
               </p>
             </div>
           </div>

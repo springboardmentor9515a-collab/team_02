@@ -13,7 +13,7 @@ router.post("/", protect, async (req, res) => {
       title,
       options,
       target_location,
-      target_authority,
+      targetAuthority,
       description,
       category,
       duration,
@@ -31,7 +31,7 @@ router.post("/", protect, async (req, res) => {
       category: category || "General",
       duration: duration || 24,
       target_location: target_location || "",
-      target_authority: target_authority || "",
+      targetAuthority: targetAuthority || "",
       created_by: req.user._id,
     });
     await poll.save();
@@ -66,6 +66,15 @@ router.post("/:id/vote", protect, async (req, res) => {
     const poll = await Poll.findById(pollId);
     if (!poll) return res.status(404).json({ message: "Poll not found" });
 
+    // Check if poll has expired
+    const createdAt = new Date(poll.createdAt);
+    const expiresAt = new Date(
+      createdAt.getTime() + poll.duration * 60 * 60 * 1000
+    ); // duration is in hours
+    if (new Date() > expiresAt) {
+      return res.status(400).json({ message: "Poll has expired" });
+    }
+
     const { selected_option } = req.body;
     if (!selected_option || !poll.options.includes(selected_option)) {
       return res.status(400).json({ message: "Invalid option" });
@@ -88,6 +97,40 @@ router.post("/:id/vote", protect, async (req, res) => {
     });
     await vote.save();
     res.status(201).json({ message: "Vote recorded" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/polls/:id/votes - get vote counts for a poll
+router.get("/:id/votes", protect, async (req, res) => {
+  try {
+    const pollId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(pollId)) {
+      return res.status(400).json({ message: "Invalid poll id" });
+    }
+
+    // Get poll to verify it exists and get options
+    const poll = await Poll.findById(pollId);
+    if (!poll) {
+      return res.status(404).json({ message: "Poll not found" });
+    }
+
+    // Get all votes for this poll
+    const votes = await Vote.find({ poll_id: pollId });
+
+    // Count votes for each option
+    const voteCounts = {};
+    poll.options.forEach((option) => {
+      voteCounts[option] = votes.filter(
+        (vote) => vote.selected_option === option
+      ).length;
+    });
+
+    res.json({
+      total: votes.length,
+      votes: voteCounts,
+    });
   } catch (err) {
     if (err.code === 11000)
       return res.status(409).json({ message: "Duplicate vote" });

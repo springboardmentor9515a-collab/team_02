@@ -71,6 +71,18 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
   const [petitions, setPetitions] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // current user id (if available in localStorage)
+  const currentUserId = (() => {
+    try {
+      const s = localStorage.getItem('user');
+      if (!s) return null;
+      const parsed = JSON.parse(s);
+      return parsed?._id || parsed?.id || null;
+    } catch (e) {
+      return null;
+    }
+  })();
+
   useEffect(() => {
     reloadPetitions();
     // eslint-disable-next-line
@@ -129,6 +141,14 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
     }
   };
 
+  // Helper to normalize signatures (server may return array of user ids or a number)
+  const getSignaturesCount = (p: any) => {
+    if (!p) return 0;
+    if (Array.isArray(p.signatures)) return p.signatures.length;
+    if (typeof p.signatures === 'number') return p.signatures;
+    return 0;
+  };
+
   // --- DETAIL VIEW COMPONENT ---
   const PetitionDetail = ({ petition }: { petition: any }) => {
     const [commentText, setCommentText] = useState("");
@@ -158,7 +178,38 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
             ← Back to Petitions
           </Button>
           <div className="flex items-center space-x-2">
-            <Button size="sm" className="bg-civix-civic-green text-white hover:bg-civix-civic-green/90">
+            <Button
+              size="sm"
+              className="bg-civix-civic-green text-white hover:bg-civix-civic-green/90"
+              disabled={Array.isArray(petition.signatures) ? petition.signatures.includes(currentUserId) : false}
+              onClick={async () => {
+                try {
+                  // optimistic update for detail view
+                  const userStr = localStorage.getItem('user');
+                  const userObj = userStr ? JSON.parse(userStr) : null;
+                  const userId = userObj?._id || userObj?.id || null;
+
+                  // update selectedPetition copy
+                  const signedCountBefore = getSignaturesCount(petition);
+                  const updatedPetition = { ...petition } as any;
+                  if (Array.isArray(updatedPetition.signatures)) {
+                    updatedPetition.signatures = userId ? [...updatedPetition.signatures, userId] : [...updatedPetition.signatures, 'local-sign'];
+                  } else if (typeof updatedPetition.signatures === 'number') {
+                    updatedPetition.signatures = updatedPetition.signatures + 1;
+                  } else {
+                    updatedPetition.signatures = 1;
+                  }
+                  setSelectedPetition(updatedPetition);
+                  setPetitions(prev => prev.map(p => (p._id === (petition._id || petition.id) ? updatedPetition : p)));
+
+                  await import('@/lib/api').then(mod => mod.petitionsAPI.signPetition(petition._id || petition.id));
+                  toast.success('Thanks — your signature was recorded');
+                } catch (err) {
+                  toast.error('Failed to sign petition. Refreshing...');
+                  reloadPetitions();
+                }
+              }}
+            >
               <ThumbsUp className="w-4 h-4 mr-2" />
               Sign Petition
             </Button>
@@ -185,13 +236,13 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
                   <span className="bg-civix-warm-beige dark:bg-gray-700 px-3 py-1 rounded-full">{petition.category}</span>
                   <span className="flex items-center"><MapPin className="w-4 h-4 mr-1" />{petition.location}</span>
                   <span className="flex items-center"><Clock className="w-4 h-4 mr-1" />{petition.daysLeft} days left</span>
-                  <span className="flex items-center"><Target className="w-4 h-4 mr-1" />Goal: {petition.goal?.toLocaleString?.() ?? ''}</span>
+                  <span className="flex items-center"><Target className="w-4 h-4 mr-1" />Goal: {petition.signatureGoal?.toLocaleString?.() ?? ''}</span>
                 </div>
                 <div className="space-y-2 mb-6">
-                  <Progress value={petition.goal && petition.signatures ? (petition.signatures / petition.goal) * 100 : 0} className="h-2" />
+                  <Progress value={petition.signatureGoal && getSignaturesCount(petition) ? (getSignaturesCount(petition) / petition.signatureGoal) * 100 : 0} className="h-2" />
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>{petition.signatures?.toLocaleString?.() ?? 0} signatures</span>
-                    <span>{petition.goal && petition.signatures ? Math.round((petition.signatures / petition.goal) * 100) : 0}% complete</span>
+                    <span>{(getSignaturesCount(petition)).toLocaleString ? getSignaturesCount(petition).toLocaleString() : getSignaturesCount(petition)} of {petition.signatureGoal?.toLocaleString?.() ?? 0} signatures</span>
+                    <span>{petition.signatureGoal && getSignaturesCount(petition) ? Math.round((getSignaturesCount(petition) / petition.signatureGoal) * 100) : 0}% complete</span>
                   </div>
                 </div>
               </div>
@@ -296,11 +347,68 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
                 </div>
               </div>
               <div className="space-y-2">
-                <Progress value={petition.goal && petition.signatures ? (petition.signatures / petition.goal) * 100 : 0} className="h-2" />
+                <Progress value={petition.signatureGoal && getSignaturesCount(petition) ? (getSignaturesCount(petition) / petition.signatureGoal) * 100 : 0} className="h-2" />
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <span>{petition.signatures?.toLocaleString?.() ?? 0} signatures</span>
-                  <span>Goal: {petition.goal?.toLocaleString?.() ?? ''}</span>
+                  <span>{(getSignaturesCount(petition)).toLocaleString ? getSignaturesCount(petition).toLocaleString() : getSignaturesCount(petition)} signatures</span>
+                  <span>Goal: {petition.signatureGoal?.toLocaleString?.() ?? ''}</span>
                 </div>
+              </div>
+              {/* Action buttons: View, Vote (sign) and Share */}
+              <div className="mt-4 flex items-center justify-end space-x-2">
+                <Button size="sm" variant="ghost" onClick={() => handleViewPetition(petition)}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  View
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-civix-civic-green text-white hover:bg-civix-civic-green/90"
+                  disabled={Array.isArray(petition.signatures) ? petition.signatures.includes(currentUserId) : false}
+                  onClick={async () => {
+                    try {
+                      // optimistic update
+                      const userStr = localStorage.getItem('user');
+                      const userObj = userStr ? JSON.parse(userStr) : null;
+                      const userId = userObj?._id || userObj?.id || null;
+
+                      setPetitions(prev => prev.map(p => {
+                        if ((p._id || p.id) === (petition._id || petition.id)) {
+                          // handle signatures as array or number
+                          const sig = p.signatures;
+                          if (Array.isArray(sig)) {
+                            // if userId present, push; otherwise push placeholder
+                            return { ...p, signatures: userId ? [...sig, userId] : [...sig, 'local-sign'] };
+                          }
+                          const newSign = (typeof sig === 'number') ? sig + 1 : 1;
+                          return { ...p, signatures: newSign };
+                        }
+                        return p;
+                      }));
+
+                      // call backend
+                      await import('@/lib/api').then(mod => mod.petitionsAPI.signPetition(petition._id || petition.id));
+                      toast.success('Thanks — your signature was recorded');
+                    } catch (err) {
+                      // revert optimistic update by reloading petitions
+                      toast.error('Failed to sign petition. Refreshing list.');
+                      reloadPetitions();
+                    }
+                  }}
+                >
+                  <ThumbsUp className="w-4 h-4 mr-2" />
+                  Sign
+                </Button>
+                <Button size="sm" variant="outline" onClick={async () => {
+                  try {
+                    const url = `${window.location.origin}/petitions/${petition._id || petition.id}`;
+                    await navigator.clipboard.writeText(url);
+                    toast.success('Link copied to clipboard');
+                  } catch (err) {
+                    toast.error('Failed to copy link');
+                  }
+                }}>
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
               </div>
             </CardContent>
           </Card>
