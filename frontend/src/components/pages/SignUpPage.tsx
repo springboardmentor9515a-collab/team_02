@@ -1,6 +1,7 @@
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
@@ -34,7 +35,8 @@ export default function SignUpPage({ onNavigate, onSignUp }: SignUpPageProps) {
     email: '',
     location: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'citizen'
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -82,6 +84,13 @@ export default function SignUpPage({ onNavigate, onSignUp }: SignUpPageProps) {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleRoleChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      role: value
     }));
   };
 
@@ -158,7 +167,7 @@ export default function SignUpPage({ onNavigate, onSignUp }: SignUpPageProps) {
           email: formData.email,
           location: formData.location,
           password: formData.password,
-          role: 'citizen', // Default role for signup
+          role: formData.role,
           latitude: detectedInfo.lat,
           longitude: detectedInfo.lon,
         }),
@@ -229,7 +238,7 @@ export default function SignUpPage({ onNavigate, onSignUp }: SignUpPageProps) {
                       </Button>
                     </div>
                     {showMap && (
-                      <div style={{ zIndex: 1000, marginTop: 12, borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }}>
+                      <div style={{ position: 'absolute', zIndex: 50, marginTop: 12, borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.15)', width: '100%' }}>
                         <MapContainer
                           center={mapPosition || [20.5937, 78.9629]} // Center on India by default
                           zoom={5}
@@ -249,6 +258,21 @@ export default function SignUpPage({ onNavigate, onSignUp }: SignUpPageProps) {
                       </div>
                     )}
                   </div>
+
+                  <div className="space-y-2 relative z-10">
+                    <Label htmlFor="role" className="text-civix-dark-brown">Role</Label>
+                    <Select value={formData.role} onValueChange={handleRoleChange}>
+                      <SelectTrigger className="border-civix-warm-beige focus:border-civix-civic-green focus:ring-civix-civic-green bg-white">
+                        <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="citizen">Citizen</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="volunteer">Volunteer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-civix-dark-brown">Password</Label>
                     <Input id="password" name="password" type="password" placeholder="Create a password" value={formData.password} onChange={handleInputChange} className="border-civix-warm-beige focus:border-civix-civic-green focus:ring-civix-civic-green" required />
@@ -257,6 +281,7 @@ export default function SignUpPage({ onNavigate, onSignUp }: SignUpPageProps) {
                     <Label htmlFor="confirmPassword" className="text-civix-dark-brown">Confirm Password</Label>
                     <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm your password" value={formData.confirmPassword} onChange={handleInputChange} className="border-civix-warm-beige focus:border-civix-civic-green focus:ring-civix-civic-green" required />
                   </div>
+
                   {error && <p className="text-sm text-red-600 text-center">{error}</p>}
                   <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white py-6 text-lg hover:opacity-90 transition-opacity disabled:opacity-50" style={{ fontWeight: '600' }}>
                     {isLoading ? 'Signing Up...' : 'Sign Up'}
