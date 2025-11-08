@@ -27,7 +27,8 @@ import {
   ThumbsUp,
   PieChart,
   X,
-  CheckCheck
+  CheckCheck,
+  FileWarning
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
@@ -37,7 +38,7 @@ import { toast } from "sonner";
 import { pollsAPI } from '@/lib/api';
 
 interface PollsModuleProps {
-  onNavigate: (page: 'dashboard' | 'petitions' | 'polls' | 'messages' | 'landing' | 'reports', itemId?: string) => void;
+  onNavigate: (page: 'dashboard' | 'petitions' | 'polls' | 'complaints' | 'landing' | 'reports', itemId?: string) => void;
   selectedItemId?: string | null;
   userName: string;
 }
@@ -61,20 +62,24 @@ interface PollOption {
 }
 
 interface Poll {
-  id: string;
-  question: string;
+  _id: string;
+  title: string;
   description: string;
   category: string;
-  options: PollOption[];
-  totalVotes: number;
-  endsIn: string;
-  endDate: string;
-  createdBy: string;
-  createdByCurrentUser: boolean;
-  createdDate: string;
-  status: string;
-  isPublic: boolean;
-  tags: string[];
+  options: string[];
+  duration: number;
+  target_location: string;
+  targetAuthority: string;
+  created_by: {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  status?: string;
+  createdByCurrentUser?: boolean;
 }
 interface Report {
   id: string;
@@ -100,24 +105,24 @@ interface Report {
 // Import the new components
 import { CreatePollForm, PollList } from './PollComponents';
 
-interface Poll {
-  id: string;
-  question: string;
-  description: string;
-  category: string;
-  options: { id: string; text: string; votes: number; percentage: number }[];
-  totalVotes: number;
-  endsIn: string;
-  endDate: string;
-  createdBy: string;
-  createdByCurrentUser: boolean;
-  createdDate: string;
-  status: string;
-  isPublic: boolean;
-  tags: string[];
+// Helper function to calculate votes and percentages
+interface VoteCount {
+  [option: string]: number;
 }
 
-export default function PollsModule({ onNavigate, selectedItemId, userName }: PollsModuleProps) {
+function calculateVoteStats(poll: Poll, votes: VoteCount = {}) {
+  const totalVotes = Object.values(votes).reduce((sum, count) => sum + count, 0);
+  return {
+    totalVotes,
+    optionsWithStats: poll.options.map(option => ({
+      text: option,
+      votes: votes[option] || 0,
+      percentage: totalVotes > 0 ? ((votes[option] || 0) / totalVotes) * 100 : 0
+    }))
+  };
+}
+
+export default function PollsModule({ onNavigate, selectedItemId, userName = 'User' }: PollsModuleProps) {
   const [activeSection, setActiveSection] = useState('polls');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -145,9 +150,13 @@ export default function PollsModule({ onNavigate, selectedItemId, userName }: Po
   }, []);
   const [votedPolls, setVotedPolls] = useState<Set<string>>(new Set(['2']));
   const [newPoll, setNewPoll] = useState({
-    question: '',
+    title: '',
     description: '',
-    options: ['', '']
+    options: ['', ''],
+    category: 'Community',
+    duration: 24 * 30, // 30 days in hours
+    target_location: 'All',
+    targetAuthority: 'Community'
   });
 
 
@@ -155,30 +164,42 @@ export default function PollsModule({ onNavigate, selectedItemId, userName }: Po
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, onClick: () => onNavigate('dashboard') },
     { id: 'petitions', label: 'Petitions', icon: FileText, onClick: () => onNavigate('petitions') },
-    { id: 'polls', label: 'Polls & Voting', icon: Vote, onClick: () => setActiveSection('polls') },
-    { id: 'reports', label: 'Reports', icon: BarChart3, onClick: () => onNavigate('reports') },
- ];
+    {id:'complaints',label:'Complaints',icon:FileWarning,onClick:()=>onNavigate('complaints')},
+  ];
 
-  const filteredPolls = polls.filter(poll =>
-    {
-      const matchesSearch = poll.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           poll.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = filterCategory === 'all' || poll.category.toLowerCase() === filterCategory;
+  const filteredPolls = polls.filter(poll => {
+      if (!poll) return false;
       
+      // Safely access potentially undefined properties
+      const title = (poll.title || '').toLowerCase();
+      const description = (poll.description || '').toLowerCase();
+      const category = (poll.category || '').toLowerCase();
+      const status = poll.status || '';
+      const id = poll._id || '';
+      
+      // Search in title and description
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = !searchQuery || 
+        title.includes(searchLower) ||
+        description.includes(searchLower);
+      
+      // Category matching
+      const matchesCategory = filterCategory === 'all' || category === filterCategory.toLowerCase();
+      
+      // Type filtering with safe property access
       let matchesType = true;
       if (filterType === 'active') {
-        matchesType = poll.status === 'active' || poll.status === 'trending';
-    } else if (filterType === 'voted') {
-      matchesType = votedPolls.has(poll.id);
+        matchesType = status === 'active' || status === 'trending';
+      } else if (filterType === 'voted') {
+        matchesType = votedPolls.has(id);
       } else if (filterType === 'my-polls') {
-        matchesType = poll.createdByCurrentUser;
+        matchesType = !!poll?.createdByCurrentUser; // Convert to boolean
       } else if (filterType === 'closed') {
-        matchesType = poll.status === 'closed';
+        matchesType = status === 'closed';
       }
       
       return matchesSearch && matchesCategory && matchesType;
-    }
-  );
+    });
 
   const handleViewPoll = (poll: any) => {
     setSelectedPoll(poll);
@@ -197,39 +218,39 @@ export default function PollsModule({ onNavigate, selectedItemId, userName }: Po
   const handleCreatePoll = async (e: React.FormEvent) => {
     e.preventDefault();
     const validOptions = newPoll.options.filter(opt => opt.trim() !== '');
-    if (!newPoll.question || validOptions.length < 2) {
-      toast.error("Please provide a question and at least two options.");
+    if (!newPoll.title || validOptions.length < 2) {
+      toast.error("Please provide a title and at least two options.");
       return;
     }
 
     try {
-      await pollsAPI.createPoll({
-        title: newPoll.question,
+      const response = await pollsAPI.createPoll({
+        title: newPoll.title,
+        description: newPoll.description,
         options: validOptions,
-        description: newPoll.description
+        category: newPoll.category,
+        duration: newPoll.duration,
+        target_location: newPoll.target_location,
+        targetAuthority: newPoll.targetAuthority
       });
 
-      const createdPoll: Poll = {
-        id: (polls.length + 1).toString(),
-        question: newPoll.question,
-        description: newPoll.description,
-        category: "Community", // Default category
-        options: validOptions.map((opt, i) => ({ id: String.fromCharCode(97 + i), text: opt, votes: 0, percentage: 0 })),
-        totalVotes: 0,
-        endsIn: "30 days",
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        createdBy: userName,
-        createdByCurrentUser: true,
-        createdDate: new Date().toISOString().split('T')[0],
-        status: "active",
-        isPublic: true,
-        tags: ["community-poll"],
-      };
-
-      setPolls([createdPoll, ...polls]);
-      toast.success("Poll created successfully!");
-      setIsCreateModalOpen(false);
-      setNewPoll({ question: '', description: '', options: ['', ''] });
+      const createdPoll = (response as any)?.poll ?? (response as any)?.data ?? response;
+      if (createdPoll) {
+        setPolls(prev => [createdPoll, ...prev]);
+        toast.success("Poll created successfully!");
+        setIsCreateModalOpen(false);
+        setNewPoll({
+          title: '',
+          description: '',
+          options: ['', ''],
+          category: 'Community',
+          duration: 24 * 30,
+          target_location: 'All',
+          targetAuthority: 'Community'
+        });
+      } else {
+        toast.error("Failed to create poll. Invalid response from server.");
+      }
     } catch (error) {
       toast.error("Failed to create poll. Please try again.");
     }
@@ -243,20 +264,29 @@ export default function PollsModule({ onNavigate, selectedItemId, userName }: Po
 
   const addOption = () => {
     if (newPoll.options.length < 5) {
-      setNewPoll({ ...newPoll, options: [...newPoll.options, ''] });
+      setNewPoll(prev => ({
+        ...prev,
+        options: [...prev.options, '']
+      }));
     }
   };
 
   const removeOption = (index: number) => {
     if (newPoll.options.length > 2) {
-      const newOptions = newPoll.options.filter((_, i) => i !== index);
-      setNewPoll({ ...newPoll, options: newOptions });
+      setNewPoll(prev => ({
+        ...prev,
+        options: prev.options.filter((_, i) => i !== index)
+      }));
     }
   };
 
   const PollDetail = ({ poll }: { poll: Poll }) => {
-    const hasVoted = votedPolls.has(poll.id);
-    const chartData = poll.options.map((option) => ({ name: option.text, value: option.votes }));
+    const hasVoted = votedPolls.has(poll._id);
+    const { totalVotes, optionsWithStats } = calculateVoteStats(poll);
+    const chartData = optionsWithStats.map((option) => ({ 
+      name: option.text, 
+      value: option.votes 
+    }));
     const COLORS = ['#4CAF50', '#5A3825', '#F5DEB3', '#EAD8C0'];
 
     return (
@@ -267,15 +297,20 @@ export default function PollsModule({ onNavigate, selectedItemId, userName }: Po
         </Button>
         <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-8">
-            <h1 className="text-3xl font-bold text-civix-dark-brown dark:text-white mb-2">{poll.question}</h1>
+            <h1 className="text-3xl font-bold text-civix-dark-brown dark:text-white mb-2">{poll.title}</h1>
             <p className="text-gray-500 dark:text-gray-400 mb-6">{poll.description}</p>
     
             {!hasVoted ? (
               <div className="space-y-3">
                 <h3 className="font-semibold text-civix-dark-brown dark:text-white">Cast Your Vote</h3>
-                {poll.options.map((option: PollOption) => (
-                  <Button key={option.id} variant="outline" className="w-full justify-start p-4 h-auto" onClick={() => handleVote(poll.id)}>
-                    {option.text}
+                {poll.options.map((option, index) => (
+                  <Button 
+                    key={index} 
+                    variant="outline" 
+                    className="w-full justify-start p-4 h-auto" 
+                    onClick={() => handleVote(poll._id)}
+                  >
+                    {option}
                   </Button>
                 ))}
               </div>
@@ -284,11 +319,11 @@ export default function PollsModule({ onNavigate, selectedItemId, userName }: Po
                 <h3 className="font-semibold text-civix-dark-brown dark:text-white mb-4">Results</h3>
                 <div className="grid md:grid-cols-2 gap-8 items-center">
                   <div className="space-y-4">
-                    {poll.options.map((option: PollOption) => (
-                      <div key={option.id}>
+                    {optionsWithStats.map((option, index) => (
+                      <div key={index}>
                         <div className="flex justify-between text-sm mb-1">
                           <span className="font-medium text-civix-dark-brown dark:text-gray-200">{option.text}</span>
-                          <span className="text-gray-500 dark:text-gray-400">{option.percentage}%</span>
+                          <span className="text-gray-500 dark:text-gray-400">{option.percentage.toFixed(1)}%</span>
                         </div>
                         <Progress value={option.percentage} className="h-2 [&>div]:bg-civix-civic-green" />
                       </div>
@@ -307,7 +342,7 @@ export default function PollsModule({ onNavigate, selectedItemId, userName }: Po
                     </ResponsiveContainer>
                   </div>
                 </div>
-                <p className="text-center mt-4 text-sm text-gray-500 dark:text-gray-400">{poll.totalVotes.toLocaleString()} total votes</p>
+                <p className="text-center mt-4 text-sm text-gray-500 dark:text-gray-400">{totalVotes.toLocaleString()} total votes</p>
               </div>
             )}
           </CardContent>
@@ -360,7 +395,7 @@ export default function PollsModule({ onNavigate, selectedItemId, userName }: Po
                 <Avatar>
                   <AvatarImage src="/api/placeholder/40/40" />
                   <AvatarFallback className="bg-civix-civic-green text-white">
-                    {userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                    {(userName || 'User').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:block">

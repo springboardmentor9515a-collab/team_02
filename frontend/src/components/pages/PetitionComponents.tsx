@@ -425,7 +425,7 @@ export function PetitionList() {
                     onClick={() => {
                       console.log('Sign button clicked for', petition._id, 'status=', petition.status, 'hasUserSigned=', petition.hasUserSigned);
                       // show a visible toast so we can confirm clicks in the UI even if console isn't watched
-                      toast('Opening sign dialog...', { type: 'info' });
+                      toast('Opening sign dialog...');
                       handleSignPetition(petition._id);
                     }}
                     disabled={Boolean(petition.hasUserSigned)}

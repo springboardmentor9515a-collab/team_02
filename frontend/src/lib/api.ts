@@ -55,6 +55,11 @@ export interface Poll {
   created_by: string;
 }
 
+export interface PollVotes {
+  total: number;
+  votes: { [option: string]: number };
+}
+
 export interface Petition {
   _id: string;
   title: string;
@@ -204,6 +209,16 @@ export const complaintsAPI = {
 };
 
 // ======================
+// ✅ User API
+// ======================
+export const userAPI = {
+  getVolunteerStats: async () => {
+    const response = await api.get("/users/volunteers/stats");
+    return response.data;
+  },
+};
+
+// ======================
 // ✅ Polls API
 // ======================
 export const pollsAPI = {
@@ -256,6 +271,24 @@ export const petitionsAPI = {
   getLocalPetitions: async () => {
     const response = await api.get('/petitions/local');
     return response.data;
+  },
+
+  // GET /petitions/volunteer/assigned - Get petitions assigned to the current volunteer
+  getAssignedPetitions: async () => {
+    const response = await api.get('/petitions/volunteer/assigned');
+    // Sort petitions - active ones first, resolved ones at the end
+    const petitions = response.data.sort((a: any, b: any) => {
+      if (a.status === 'resolved' && b.status !== 'resolved') return 1;
+      if (a.status !== 'resolved' && b.status === 'resolved') return -1;
+      // For resolved petitions, sort by latest resolution time
+      if (a.status === 'resolved' && b.status === 'resolved') {
+        const aTime = a.status_history?.find((h: any) => h.status === 'resolved')?.timestamp || a.updatedAt;
+        const bTime = b.status_history?.find((h: any) => h.status === 'resolved')?.timestamp || b.updatedAt;
+        return new Date(bTime).getTime() - new Date(aTime).getTime();
+      }
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+    return petitions;
   },
 
   // PUT /petitions/:id/assign - Official assigns petition to volunteer

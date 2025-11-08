@@ -21,7 +21,7 @@ const upload = multer({
 router.post(
   "/",
   protect,
-  authorize("citizen"),
+  authorize("citizen", "official", "volunteer", "admin"),
   upload.single("photo"), // parse multipart/form-data
   [
     body("title").isString().notEmpty(),

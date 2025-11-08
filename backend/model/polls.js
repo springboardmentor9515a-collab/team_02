@@ -34,7 +34,8 @@ const PollSchema = new mongoose.Schema(
     },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      // Model registered as "User" (capital U) in backend/model/User.js
+      ref: "User",
       required: true,
     },
     target_location: {
@@ -42,14 +43,7 @@ const PollSchema = new mongoose.Schema(
       required: [true, "Target location is required."],
       trim: true,
     },
-    latitude: {
-      type: Number,
-      required: false,
-    },
-    longitude: {
-      type: Number,
-      required: false,
-    },
+
     targetAuthority: {
       type: String,
       required: [true, "Target authority is required."],

@@ -2,18 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === SIDEBAR DIALOG OVERRIDES === */
+@layer components {
+  /* OVERLAY (background dim + blur) */
+  [data-slot="dialog-overlay"] {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgb(251, 251, 251) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  /* DIALOG AS LEFT SIDEBAR */
+  [data-slot="dialog-content"] {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important; /* attaches to left edge */
+    width:100vw !important;       /* adjust width here */
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 1rem !important;
+    border-radius: 0 !important;
+
+    background-color: var(--card) !important;
+    color: var(--foreground) !important;
+    box-shadow: 2px 0 14px rgba(0, 0, 0, 0.12) !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+
+    /* Slide Animation */
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1) !important;
+  }
+
+  /* OPEN STATE → slide in */
+  [data-state="open"][data-slot="dialog-content"] {
+    transform: translateX(0);
+  }
+
+  /* CLOSED STATE → slide out */
+  [data-state="closed"][data-slot="dialog-content"] {
+    transform: translateX(-100%);
+  }
+
+  /* HEADER STICKY */
+  [data-slot="dialog-header"] {
+    flex-shrink: 0 !important;
+    position: sticky !important;
+    top: 0 !important;
+    background: inherit !important;
+    z-index: 10 !important;
+    padding-bottom: 0.75rem !important;
+    border-bottom: 1px solid rgb(229 231 235) !important;
+  }
+
+  /* FOOTER STICKY */
+  [data-slot="dialog-footer"] {
+    flex-shrink: 0 !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    background: inherit !important;
+    z-index: 10 !important;
+    padding-top: 0.75rem !important;
+    border-top: 1px solid rgb(229 231 235) !important;
+    margin-top: auto !important;
+  }
+
+  /* MIDDLE AREA SCROLL */
+  [data-slot="dialog-content"] > div:not([data-slot="dialog-header"]):not([data-slot="dialog-footer"]) {
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    padding-right: 0.5rem !important;
+
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent !important;
+  }
+
+  [data-slot="dialog-content"] > div::-webkit-scrollbar {
+    width: 6px !important;
+  }
+
+  [data-slot="dialog-content"] > div::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    border-radius: 6px !important;
+  }
+
+  [data-slot="dialog-content"] > div::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+}
+
+/* === KEEP YOUR THEME COLORS AS THEY ARE === */
 @layer base {
   :root {
     --font-size: 16px;
-    --background: 45 78% 90%;      /* Custom: Light Sandal */
-    --foreground: 27 42% 25%;      /* civix-dark-brown */
-    --card: 0 0% 100%;             /* White for cards */
+    --background: 45 78% 90%;
+    --foreground: 27 42% 25%;
+    --card: 0 0% 100%;
     --card-foreground: 27 42% 25%;
     --popover: 0 0% 100%;
     --popover-foreground: 27 42% 25%;
-    --primary: 122 39% 49%;        /* civix-civic-green */
+    --primary: 122 39% 49%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 42 56% 85%;       /* civix-warm-beige */
+    --secondary: 42 56% 85%;
     --secondary-foreground: 27 42% 25%;
     --muted: 220 13% 91%;
     --muted-foreground: 220 9% 46%;
@@ -25,34 +119,11 @@
     --input: 42 56% 85%;
     --ring: 122 39% 49%;
     --radius: 0.75rem;
-    
-    /* Custom Civix Colors (not used by shadcn directly but good for custom components) */
-    --civix-sandal: #F5DEB3;
-    --civix-warm-beige: #EAD8C0;
-    --civix-dark-brown: #5A3825;
-    --civix-civic-green: #4CAF50;
   }
- 
+
   .dark {
-    --background: 27 42% 15%;      /* Darker version of dark-brown */
-    --foreground: 45 78% 83%;      /* civix-sandal */
-    --card: 27 42% 18%;
-    --card-foreground: 45 78% 83%;
-    --popover: 27 42% 15%;
-    --popover-foreground: 45 78% 83%;
-    --primary: 122 39% 49%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 27 42% 25%;
-    --secondary-foreground: 45 78% 83%;
-    --muted: 27 42% 25%;
-    --muted-foreground: 45 78% 70%;
-    --accent: 27 42% 25%;
-    --accent-foreground: 45 78% 83%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 27 42% 25%;
-    --input: 27 42% 25%;
-    --ring: 122 39% 49%;
+    --background: 27 42% 15%;
+    --foreground: 45 78% 83%;
   }
 }
 
@@ -64,4 +135,3 @@
     @apply bg-background text-foreground;
   }
 }
-

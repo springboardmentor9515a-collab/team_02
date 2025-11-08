@@ -187,6 +187,24 @@ router.get(
   }
 );
 
+// GET /api/petitions/volunteer/assigned - Get petitions assigned to the current volunteer
+router.get(
+  "/volunteer/assigned",
+  protect,
+  authorize("volunteer"),
+  async (req, res) => {
+    try {
+      const petitions = await Petition.find({
+        assigned_to: req.user._id,
+        status: { $in: ["assigned", "under_review"] },
+      }).populate("creator assigned_to", "name email role");
+      res.json(petitions);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
 // PUT /api/petitions/:id/assign - Official assigns petition to volunteer
 router.put(
   "/:id/assign",

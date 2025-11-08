@@ -39,6 +39,48 @@ export interface Complaint {
   updatedAt: string;
 }
 
+export interface Petition {
+  _id: string;
+  title: string;
+  summary: string;
+  description: string;
+  category: string;
+  location: string;
+  targetAuthority: string;
+  signatureGoal: number;
+  status: string;
+  signatures?: Array<{
+    name: string;
+    email: string;
+    comment?: string;
+    date: string;
+  }>;
+  assigned_to?: {
+    _id: string;
+    name?: string;
+    email?: string;
+    role?: string;
+  };
+  status_history?: Array<{
+    status: string;
+    by: string;
+    note?: string;
+    timestamp: string;
+  }>;
+  comments?: Array<{
+    by: {
+      _id: string;
+      name?: string;
+      email?: string;
+      role?: string;
+    };
+    text: string;
+    at: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateComplaintData {
   title: string;
   description: string;
