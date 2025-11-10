@@ -5,9 +5,8 @@ import axios from "axios";
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
   timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // Do not set a default Content-Type here so that axios can
+  // automatically set the correct header for FormData (multipart) requests.
 });
 
 // ✅ Request interceptor to add auth token

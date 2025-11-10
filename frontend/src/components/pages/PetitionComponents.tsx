@@ -282,7 +282,7 @@ export function PetitionList() {
       // Refresh the petitions list if needed
       await loadPetitions();
     } catch (error) {
-      toast.error('Failed to sign petition. Please try again.');
+      toast.error('You have already signed this petition.');
     }
   };
   
@@ -296,7 +296,7 @@ export function PetitionList() {
       setPetitions(data);
     } catch (error) {
       console.error('Error loading petitions:', error);
-      toast.error('Failed to load petitions');
+    
     } finally {
       setLoading(false);
     }
@@ -423,8 +423,11 @@ export function PetitionList() {
                   <Button
                     className="flex-1"
                     onClick={() => {
+                      if (petition.hasUserSigned) {
+                        toast.error("You have already signed this petition");
+                        return;
+                      }
                       console.log('Sign button clicked for', petition._id, 'status=', petition.status, 'hasUserSigned=', petition.hasUserSigned);
-                      // show a visible toast so we can confirm clicks in the UI even if console isn't watched
                       toast('Opening sign dialog...');
                       handleSignPetition(petition._id);
                     }}

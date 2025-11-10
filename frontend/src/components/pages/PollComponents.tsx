@@ -445,11 +445,6 @@ export function PollList() {
         data.map(async (p: any) => {
           try {
             const results = await pollsAPI.getPollResults(p._id);
-            // Check if user has voted for this poll
-            const userVote = localStorage.getItem(`poll_${p._id}_vote`);
-            if (userVote) {
-              results.userVote = userVote;
-            }
             return { ...p, results };
           } catch (err) {
             // If results endpoint fails, still return poll without results
@@ -472,8 +467,6 @@ export function PollList() {
   const handleVote = async (pollId: string, selectedOption: string) => {
     try {
       await pollsAPI.vote(pollId, selectedOption);
-      // Store the user's vote locally
-      localStorage.setItem(`poll_${pollId}_vote`, selectedOption);
       toast.success('Vote recorded successfully');
       await loadPolls(); // Reload polls to get updated counts
     } catch (error: any) {
