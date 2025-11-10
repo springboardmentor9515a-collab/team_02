@@ -76,7 +76,6 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
         setPetitions(Array.isArray(petitionsData) ? petitionsData : (petitionsData?.petitions || []));
       } catch (error) {
         console.error('Failed to fetch petitions:', error);
-        toast.error('Failed to load petitions');
       }
 
       try {
@@ -85,7 +84,6 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
         setPolls(Array.isArray(pollsData) ? pollsData : (pollsData?.polls || []));
       } catch (error) {
         console.error('Failed to fetch polls:', error);
-        toast.error('Failed to load polls');
       }
 
       try {
@@ -94,7 +92,6 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
         setVolunteerCount(volunteerStatsData?.totalVolunteers || 0);
       } catch (error) {
         console.error('Failed to fetch volunteer stats:', error);
-        toast.error('Failed to load volunteer statistics');
       }
 
       try {
@@ -103,7 +100,6 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
         setComplaints(Array.isArray(complaintsData) ? complaintsData : []);
       } catch (error) {
         console.error('Failed to fetch complaints:', error);
-        toast.error('Failed to load complaints');
       }
 
     } catch (err) {
@@ -166,12 +162,10 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
 
   const handleVolunteerRegistration = () => {
     if (selectedCategories.length === 0) {
-      toast.error('Please select at least one work category');
       return;
     }
 
     // Simulate API call
-    toast.success('Successfully registered as a volunteer!');
     
     // Reset and close
     setVolunteerSheetOpen(false);
@@ -628,20 +622,37 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                       </div>
                       <div className="space-y-3">
                         {/* You can add signature/goal/progress info if available */}
-                        <div className="flex items-center flex-wrap gap-3 pt-2">
-                          <Button size="sm" className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white shrink-0">
-                            <Eye className="w-3 h-3 mr-1 shrink-0" />
-                            View
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-civix-civic-green text-civix-civic-green hover:bg-civix-civic-green hover:text-white shrink-0">
-                            <ThumbsUp className="w-3 h-3 mr-1 shrink-0" />
-                            Sign
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-civix-dark-brown text-civix-dark-brown dark:border-civix-sandal dark:text-civix-sandal hover:bg-civix-dark-brown hover:text-white dark:hover:bg-civix-sandal dark:hover:text-civix-dark-brown shrink-0">
-                            <Share2 className="w-3 h-3 mr-1 shrink-0" />
-                            Share
-                          </Button>
-                        </div>
+                       <div className="flex items-center flex-wrap gap-3 pt-2">
+  <Button 
+    size="sm" 
+    className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white shrink-0"
+    onClick={() => onNavigate('petitions')}
+  >
+    <Eye className="w-3 h-3 mr-1 shrink-0" />
+    View
+  </Button>
+
+  <Button 
+    size="sm" 
+    variant="outline" 
+    className="border-civix-civic-green text-civix-civic-green hover:bg-civix-civic-green hover:text-white shrink-0"
+    onClick={() => onNavigate('petitions')}
+  >
+    <ThumbsUp className="w-3 h-3 mr-1 shrink-0" />
+    Sign
+  </Button>
+
+  <Button 
+    size="sm" 
+    variant="outline" 
+    className="border-civix-dark-brown text-civix-dark-brown dark:border-civix-sandal dark:text-civix-sandal hover:bg-civix-dark-brown hover:text-white dark:hover:bg-civix-sandal dark:hover:text-civix-dark-brown shrink-0"
+    onClick={() => onNavigate('petitions')}
+  >
+    <Share2 className="w-3 h-3 mr-1 shrink-0" />
+    Share
+  </Button>
+</div>
+
                       </div>
                     </CardContent>
                   </Card>
@@ -693,10 +704,15 @@ export default function Dashboard({ onNavigate, userName }: DashboardProps) {
                       </div>
                       <div className="flex items-center justify-between pt-2 flex-wrap gap-3">
                         <span className="text-sm text-civix-dark-brown/70 dark:text-civix-sandal/70">{poll.totalVotes ? poll.totalVotes.toLocaleString() : 0} total votes</span>
-                        <Button size="sm" className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white shrink-0">
-                          <Vote className="w-3 h-3 mr-1 shrink-0" />
-                          Vote Now
-                        </Button>
+                       <Button 
+  size="sm" 
+  className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white shrink-0"
+  onClick={() => onNavigate('polls')}
+>
+  <Vote className="w-3 h-3 mr-1 shrink-0" />
+  Vote Now
+</Button>
+
                       </div>
                     </CardContent>
                   </Card>

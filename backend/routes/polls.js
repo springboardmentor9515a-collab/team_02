@@ -47,10 +47,10 @@ router.get("/", protect, async (req, res) => {
     const q = {};
     if (req.query.target_location)
       q.target_location = req.query.target_location;
-    const polls = await Poll.find(q).populate(
-      "created_by",
-      "name email role location"
-    );
+    // Return polls newest-first (descending by creation time)
+    const polls = await Poll.find(q)
+      .populate("created_by", "name email role location")
+      .sort({ createdAt: -1 });
     res.json(polls);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -169,7 +169,22 @@ router.get("/:id/results", protect, async (req, res) => {
       percentages[k] = total > 0 ? Math.round((counts[k] / total) * 100) : 0;
     });
 
-    res.json({ counts, percentages, total });
+    // Include whether the requesting user has already voted on this poll
+    // (the route is protected so req.user should be available)
+    let userVote = undefined;
+    try {
+      if (req.user && req.user._id) {
+        const userVoteDoc = await Vote.findOne({
+          poll_id: poll._id,
+          user_id: req.user._id,
+        });
+        if (userVoteDoc) userVote = userVoteDoc.selected_option;
+      }
+    } catch (e) {
+      console.warn("Failed to determine user vote for poll results", e);
+    }
+
+    res.json({ counts, percentages, total, userVote });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

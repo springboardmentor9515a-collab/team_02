@@ -36,7 +36,7 @@ router.post(
 router.get(
   "/",
   protect,
-  authorize("admin"),
+  authorize("citizen", "official", "volunteer", "admin"),
   complaintController.getAllComplaints
 );
 

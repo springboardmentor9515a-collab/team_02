@@ -389,7 +389,7 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
                       toast.success('Thanks — your signature was recorded');
                     } catch (err) {
                       // revert optimistic update by reloading petitions
-                      toast.error('Failed to sign petition. Refreshing list.');
+                      toast.error('you have already signed this petition , Refreshing...');
                       reloadPetitions();
                     }
                   }}
