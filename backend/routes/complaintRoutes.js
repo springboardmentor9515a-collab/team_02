@@ -64,11 +64,11 @@ router.get(
   complaintController.getVolunteerComplaints
 );
 
-// Volunteer: update complaint status
+// Volunteer/Admin: update complaint status
 router.put(
   "/:id/status",
   protect,
-  authorize("volunteer"),
+  authorize("volunteer", "admin"),
   complaintController.updateStatus
 );
 

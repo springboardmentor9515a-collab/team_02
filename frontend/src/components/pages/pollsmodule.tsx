@@ -352,9 +352,9 @@ export default function PollsModule({ onNavigate, selectedItemId, userName = 'Us
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-civix-sandal to-civix-warm-beige dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <header className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-civix-warm-beige dark:border-gray-700 shadow-sm">
+      <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-civix-warm-beige dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
@@ -420,7 +420,7 @@ export default function PollsModule({ onNavigate, selectedItemId, userName = 'Us
         <div className="grid lg:grid-cols-12 gap-8">
           {/* Left Sidebar */}
           <div className="lg:col-span-3">
-            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg">
               <CardContent className="p-6">
                 <nav className="space-y-2">
                   {sidebarItems.map((item) => (
@@ -458,8 +458,8 @@ export default function PollsModule({ onNavigate, selectedItemId, userName = 'Us
                       Create Poll
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
+                  <DialogContent className="sm:max-w-[625px] max-h-[90vh] overflow-y-auto bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm">
+                    <DialogHeader className="sticky top-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm z-10 pb-4">
                       <DialogTitle>Create New Poll</DialogTitle>
                       <DialogDescription>Gather community opinions on important topics.</DialogDescription>
                     </DialogHeader>
