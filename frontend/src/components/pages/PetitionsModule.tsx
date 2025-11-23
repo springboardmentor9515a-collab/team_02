@@ -132,7 +132,13 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
   const reloadPetitions = async () => {
     try {
       const data = await import('@/lib/api').then(mod => mod.petitionsAPI.getAllPetitions());
-      setPetitions(Array.isArray(data) ? data : (data.petitions || []));
+      const raw = Array.isArray(data) ? data : (data.petitions || []);
+      // normalize and annotate each petition with isSignedByCurrentUser so UI can use it safely
+      const normalized = raw.map((p: any) => ({
+        ...p,
+        isSignedByCurrentUser: isSignedByCurrentUser(p),
+      }));
+      setPetitions(normalized);
       setError(null);
     } catch (err) {
       console.error('Error loading petitions:', err);
@@ -147,6 +153,19 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
     if (Array.isArray(p.signatures)) return p.signatures.length;
     if (typeof p.signatures === 'number') return p.signatures;
     return 0;
+  };
+
+  // Helper to determine if current user already signed a petition
+  const isSignedByCurrentUser = (p: any) => {
+    if (!p) return false;
+    // explicit flag from server takes precedence
+    if (p.isSignedByUser || p.isSignedByCurrentUser) return true;
+    try {
+      if (Array.isArray(p.signatures) && currentUserId) return p.signatures.includes(currentUserId);
+    } catch (e) {
+      // ignore
+    }
+    return false;
   };
 
   // --- DETAIL VIEW COMPONENT ---
@@ -180,8 +199,8 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
           <div className="flex items-center space-x-2">
             <Button
               size="sm"
-              className="bg-civix-civic-green text-white hover:bg-civix-civic-green/90"
-              disabled={Array.isArray(petition.signatures) ? petition.signatures.includes(currentUserId) : false}
+              className={petition.isSignedByCurrentUser ? "bg-gray-300 text-gray-700 cursor-not-allowed" : "bg-civix-civic-green text-white hover:bg-civix-civic-green/90"}
+              disabled={petition.isSignedByCurrentUser}
               onClick={async () => {
                 try {
                   // optimistic update for detail view
@@ -199,6 +218,7 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
                   } else {
                     updatedPetition.signatures = 1;
                   }
+                  updatedPetition.isSignedByCurrentUser = true;
                   setSelectedPetition(updatedPetition);
                   setPetitions(prev => prev.map(p => (p._id === (petition._id || petition.id) ? updatedPetition : p)));
 
@@ -211,7 +231,7 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
               }}
             >
               <ThumbsUp className="w-4 h-4 mr-2" />
-              Sign Petition
+              {petition.isSignedByCurrentUser ? 'Signed' : 'Sign Petition'}
             </Button>
             <Button size="sm" variant="outline">
               <Share2 className="w-4 h-4 mr-2" />
@@ -361,8 +381,8 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-civix-civic-green text-white hover:bg-civix-civic-green/90"
-                  disabled={Array.isArray(petition.signatures) ? petition.signatures.includes(currentUserId) : false}
+                  className={petition.isSignedByCurrentUser ? "bg-gray-300 text-gray-700 cursor-not-allowed" : "bg-civix-civic-green text-white hover:bg-civix-civic-green/90"}
+                  disabled={petition.isSignedByCurrentUser}
                   onClick={async () => {
                     try {
                       // optimistic update
@@ -372,14 +392,16 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
 
                       setPetitions(prev => prev.map(p => {
                         if ((p._id || p.id) === (petition._id || petition.id)) {
-                          // handle signatures as array or number
+                          // handle signatures as array or number and mark as signed by current user
                           const sig = p.signatures;
+                          const updated: any = { ...p };
                           if (Array.isArray(sig)) {
-                            // if userId present, push; otherwise push placeholder
-                            return { ...p, signatures: userId ? [...sig, userId] : [...sig, 'local-sign'] };
+                            updated.signatures = userId ? [...sig, userId] : [...sig, 'local-sign'];
+                          } else {
+                            updated.signatures = (typeof sig === 'number') ? sig + 1 : 1;
                           }
-                          const newSign = (typeof sig === 'number') ? sig + 1 : 1;
-                          return { ...p, signatures: newSign };
+                          updated.isSignedByCurrentUser = true;
+                          return updated;
                         }
                         return p;
                       }));
@@ -395,7 +417,7 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
                   }}
                 >
                   <ThumbsUp className="w-4 h-4 mr-2" />
-                  Sign
+                  {petition.isSignedByCurrentUser ? 'Signed' : 'Sign'}
                 </Button>
                 <Button size="sm" variant="outline" onClick={async () => {
                   try {
@@ -442,10 +464,7 @@ export default function PetitionsModule({ onNavigate, selectedItemId, userName, 
               <BarChart3 className="w-4 h-4 mr-2" />
               Reports
             </TabsTrigger>
-            <TabsTrigger value="messages" className="flex items-center">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Messages
-            </TabsTrigger>
+            
           </TabsList>
         </div>
 

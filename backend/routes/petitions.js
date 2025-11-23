@@ -79,7 +79,15 @@ router.get("/", protect, async (req, res) => {
       "creator assigned_to",
       "name email role"
     );
-    res.json(petitions);
+    // Add isSignedByCurrentUser flag for each petition
+    const petitionsWithSignedFlag = petitions.map((petition) => {
+      const petitionObj = petition.toObject();
+      petitionObj.isSignedByCurrentUser = petition.signatures.includes(
+        req.user._id
+      );
+      return petitionObj;
+    });
+    res.json(petitionsWithSignedFlag);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -180,7 +188,15 @@ router.get(
         "creator assigned_to",
         "name email role"
       );
-      res.json(petitions);
+      // Add isSignedByCurrentUser flag for each petition
+      const petitionsWithSignedFlag = petitions.map((petition) => {
+        const petitionObj = petition.toObject();
+        petitionObj.isSignedByCurrentUser = petition.signatures.includes(
+          req.user._id
+        );
+        return petitionObj;
+      });
+      res.json(petitionsWithSignedFlag);
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -198,7 +214,15 @@ router.get(
         assigned_to: req.user._id,
         status: { $in: ["assigned", "under_review"] },
       }).populate("creator assigned_to", "name email role");
-      res.json(petitions);
+      // Add isSignedByCurrentUser flag for each petition
+      const petitionsWithSignedFlag = petitions.map((petition) => {
+        const petitionObj = petition.toObject();
+        petitionObj.isSignedByCurrentUser = petition.signatures.includes(
+          req.user._id
+        );
+        return petitionObj;
+      });
+      res.json(petitionsWithSignedFlag);
     } catch (err) {
       res.status(500).json({ message: err.message });
     }

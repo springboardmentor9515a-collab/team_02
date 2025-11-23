@@ -111,51 +111,57 @@ export function CreatePetitionForm({ onClose, onPetitionCreated }: CreatePetitio
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto p-4">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-lg">
+      <CardHeader>
+        <CardTitle className="text-2xl text-civix-dark-brown dark:text-civix-sandal">Create Petition</CardTitle>
+        <CardDescription className="text-civix-dark-brown/70 dark:text-civix-sandal/70">Start a petition to advocate for change in your community. All fields marked with * are required.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column */}
         <div className="space-y-4">
           <div>
-            <Label htmlFor="title" className="text-lg font-semibold">Title</Label>
+            <Label htmlFor="title" className="text-civix-dark-brown dark:text-civix-sandal">Title *</Label>
             <Input
               id="title"
               value={title}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
               placeholder="Enter petition title"
-              className="mt-1"
+              className="border-civix-warm-beige dark:border-gray-600"
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="summary" className="text-lg font-semibold">Summary</Label>
+            <Label htmlFor="summary" className="text-civix-dark-brown dark:text-civix-sandal">Summary *</Label>
             <Input
               id="summary"
               value={summary}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSummary(e.target.value)}
               placeholder="Brief summary of the petition"
-              className="mt-1"
+              className="border-civix-warm-beige dark:border-gray-600"
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="description" className="text-lg font-semibold">Description</Label>
+            <Label htmlFor="description" className="text-civix-dark-brown dark:text-civix-sandal">Description *</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
               placeholder="Detailed description of the petition"
-              className="mt-1 min-h-[150px]"
+              className="border-civix-warm-beige dark:border-gray-600 min-h-32"
               required
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="category" className="text-lg font-semibold">Category</Label>
+              <Label htmlFor="category" className="text-civix-dark-brown dark:text-civix-sandal">Category *</Label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="border-civix-warm-beige dark:border-gray-600">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -170,14 +176,14 @@ export function CreatePetitionForm({ onClose, onPetitionCreated }: CreatePetitio
             </div>
 
             <div>
-              <Label htmlFor="signatureGoal" className="text-lg font-semibold">Signature Goal</Label>
+              <Label htmlFor="signatureGoal" className="text-civix-dark-brown dark:text-civix-sandal">Signature Goal *</Label>
               <Input
                 id="signatureGoal"
                 type="number"
                 min="1"
                 value={signatureGoal}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignatureGoal(parseInt(e.target.value))}
-                className="mt-1"
+                className="border-civix-warm-beige dark:border-gray-600"
                 required
               />
             </div>
@@ -187,20 +193,20 @@ export function CreatePetitionForm({ onClose, onPetitionCreated }: CreatePetitio
         {/* Right Column */}
         <div className="space-y-4">
           <div>
-            <Label className="text-lg font-semibold">Location</Label>
-            <div className="mt-1 rounded-lg overflow-hidden border border-input">
+            <Label className="text-civix-dark-brown dark:text-civix-sandal">Location *</Label>
+            <div className="rounded-lg overflow-hidden border border-civix-warm-beige dark:border-gray-600">
               <MapContainer center={defaultPosition} zoom={5} style={{ height: '250px', width: '100%' }}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <LocationPicker />
               </MapContainer>
             </div>
             {lat !== null && lng !== null && (
-              <div className="text-xs mt-1 text-muted-foreground">Selected coordinates: {lat.toFixed(6)}, {lng.toFixed(6)}</div>
+              <div className="text-xs text-civix-dark-brown/70 dark:text-civix-sandal/70">Selected coordinates: {lat.toFixed(6)}, {lng.toFixed(6)}</div>
             )}
           </div>
 
           <div>
-            <Label htmlFor="location" className="text-lg font-semibold">Location Description</Label>
+            <Label htmlFor="location" className="text-civix-dark-brown dark:text-civix-sandal">Location Description *</Label>
             <Input
               id="location"
               value={location}
@@ -210,42 +216,44 @@ export function CreatePetitionForm({ onClose, onPetitionCreated }: CreatePetitio
                 setLng(null);
               }}
               placeholder="Or enter location manually"
-              className="mt-1"
+              className="border-civix-warm-beige dark:border-gray-600"
             />
           </div>
 
           <div>
-            <Label htmlFor="targetAuthority" className="text-lg font-semibold">Target Authority</Label>
+            <Label htmlFor="targetAuthority" className="text-civix-dark-brown dark:text-civix-sandal">Target Authority *</Label>
             <Input
               id="targetAuthority"
               value={targetAuthority}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTargetAuthority(e.target.value)}
               placeholder="Authority this petition is addressed to"
-              className="mt-1"
+              className="border-civix-warm-beige dark:border-gray-600"
               required
             />
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end gap-4 pt-4 border-t">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onClose}
-          className="min-w-[120px]"
-        >
-          Cancel
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={loading}
-          className="min-w-[120px]"
-        >
-          {loading ? 'Creating...' : 'Create Petition'}
-        </Button>
-      </div>
-    </form>
+          <div className="flex justify-end gap-4 pt-4 border-t">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="min-w-[120px] border-civix-warm-beige dark:border-gray-600"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="min-w-[120px] bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white"
+            >
+              {loading ? 'Creating...' : 'Create Petition'}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 

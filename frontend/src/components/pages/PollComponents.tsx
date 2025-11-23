@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, X } from "lucide-react";
 import { pollsAPI } from '@/lib/api';
 import { toast } from "sonner";
@@ -191,183 +192,195 @@ export function CreatePollForm({ onClose, onPollCreated }: CreatePollFormProps) 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={formData.title}
-          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-          placeholder="Enter poll title"
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-          placeholder="Enter poll description"
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="category">Category</Label>
-        <select
-          id="category"
-          value={formData.category}
-          onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-          className="w-full rounded-md border border-input bg-background px-3 py-2"
-          required
-        >
-          <option value="">Select a category</option>
-          <option value="community">Community Development</option>
-          <option value="infrastructure">Infrastructure</option>
-          <option value="environment">Environment</option>
-          <option value="education">Education</option>
-          <option value="safety">Public Safety</option>
-          <option value="events">Local Events</option>
-        </select>
-      </div>
-
-      <div>
-        <Label htmlFor="duration">Duration (hours)</Label>
-        <Input
-          id="duration"
-          type="number"
-          min="1"
-          value={formData.duration}
-          onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-          placeholder="Enter poll duration in hours"
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="target_location">Target Location</Label>
-        <div className="relative">
-          <div className="flex gap-2 items-center">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-4">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="title" className="text-civix-dark-brown dark:text-civix-sandal">Title *</Label>
             <Input
-              id="target_location"
-              value={formData.target_location}
-              onChange={(e) => setFormData(prev => ({ ...prev, target_location: e.target.value }))}
-              onFocus={() => { if (suggestions.length) setShowSuggestions(true); }}
-              placeholder="Enter target location"
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Enter poll title"
+              className="border-civix-warm-beige dark:border-gray-600"
               required
-              aria-autocomplete="list"
-              aria-controls="location-suggestions"
             />
-            <Button type="button" variant="outline" onClick={() => setShowMapModal(true)}>
-              Choose from map
-            </Button>
           </div>
 
-          {/* Suggestions dropdown */}
-          {showSuggestions && suggestions.length > 0 && (
-            <ul id="location-suggestions" role="listbox" className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-auto bg-white border rounded">
-              {suggestions.map((s: any, idx: number) => (
-                <li key={s.place_id || idx} role="option" className="px-3 py-2 hover:bg-gray-100 cursor-pointer" onMouseDown={(e) => e.preventDefault()} onClick={() => {
-                  setFormData(prev => ({ ...prev, target_location: s.display_name }));
-                  const lat = parseFloat(s.lat);
-                  const lon = parseFloat(s.lon);
-                  setLatitude(lat);
-                  setLongitude(lon);
-                  setShowSuggestions(false);
-                }}>
-                  <div className="text-sm">{s.display_name}</div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+          <div>
+            <Label htmlFor="description" className="text-civix-dark-brown dark:text-civix-sandal">Description *</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Enter poll description"
+              className="border-civix-warm-beige dark:border-gray-600 min-h-32"
+              required
+            />
+          </div>
 
-        {/* Map modal */}
-        {showMapModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setShowMapModal(false)} />
-            <div className="relative w-11/12 max-w-2xl bg-white rounded shadow-lg p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-semibold">Choose location on map</h3>
-                <Button type="button" variant="ghost" onClick={() => setShowMapModal(false)}>Close</Button>
-              </div>
-              <div style={{ height: '350px', width: '100%' }}>
-                <MapContainer center={[9.0820, 8.6753]} zoom={5} style={{ height: '100%', width: '100%' }}>
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                  <MapClickHandler />
-                  {latitude != null && longitude != null && (
-                    <Marker position={[latitude, longitude]} icon={L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41] })} />
-                  )}
-                </MapContainer>
-              </div>
-              <div className="mt-3 flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => { setLatitude(null); setLongitude(null); setFormData(prev => ({ ...prev, target_location: '' })); }}>
-                  Clear
-                </Button>
-                <Button type="button" onClick={() => setShowMapModal(false)}>
-                  Done
-                </Button>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="category" className="text-civix-dark-brown dark:text-civix-sandal">Category *</Label>
+              <select
+                id="category"
+                value={formData.category}
+                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                className="w-full rounded-md border border-civix-warm-beige dark:border-gray-600 bg-background px-3 py-2 text-sm"
+                required
+              >
+                <option value="">Select a category</option>
+                <option value="community">Community Development</option>
+                <option value="infrastructure">Infrastructure</option>
+                <option value="environment">Environment</option>
+                <option value="education">Education</option>
+                <option value="safety">Public Safety</option>
+                <option value="events">Local Events</option>
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="duration" className="text-civix-dark-brown dark:text-civix-sandal">Duration (hours) *</Label>
+              <Input
+                id="duration"
+                type="number"
+                min="1"
+                value={formData.duration}
+                onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                placeholder="Enter duration"
+                className="border-civix-warm-beige dark:border-gray-600"
+                required
+              />
             </div>
           </div>
-        )}
-      </div>
+        </div>
 
-      <div>
-        <Label htmlFor="targetAuthority">Target Authority</Label>
-        <Input
-          id="targetAuthority"
-          value={formData.targetAuthority}
-          onChange={(e) => setFormData(prev => ({ ...prev, targetAuthority: e.target.value }))}
-          placeholder="Enter target authority"
-          required
-        />
-      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="target_location" className="text-civix-dark-brown dark:text-civix-sandal">Target Location *</Label>
+            <div className="relative mt-1">
+              <div className="flex gap-2 items-center flex-col sm:flex-row">
+                <Input
+                  id="target_location"
+                  value={formData.target_location}
+                  onChange={(e) => setFormData(prev => ({ ...prev, target_location: e.target.value }))}
+                  onFocus={() => { if (suggestions.length) setShowSuggestions(true); }}
+                  placeholder="Enter target location"
+                  required
+                  aria-autocomplete="list"
+                  aria-controls="location-suggestions"
+                  className="w-full"
+                />
+                <Button type="button" variant="outline" onClick={() => setShowMapModal(true)} className="w-full sm:w-auto">
+                  Choose from map
+                </Button>
+              </div>
 
-     
-      <div className="space-y-2">
-        <Label>Options</Label>
-        {formData.options.map((option, index) => (
-          <div key={index} className="flex items-center gap-2">
+              {/* Suggestions dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <ul id="location-suggestions" role="listbox" className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-auto bg-civix-light-gray dark:bg-gray-800 border rounded shadow-md">
+                  {suggestions.map((s: any, idx: number) => (
+                    <li key={s.place_id || idx} role="option" className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer" onMouseDown={(e) => e.preventDefault()} onClick={() => {
+                      setFormData(prev => ({ ...prev, target_location: s.display_name }));
+                      const lat = parseFloat(s.lat);
+                      const lon = parseFloat(s.lon);
+                      setLatitude(lat);
+                      setLongitude(lon);
+                      setShowSuggestions(false);
+                    }}>
+                      <div className="text-sm text-gray-700 dark:text-gray-300">{s.display_name}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="targetAuthority" className="text-civix-dark-brown dark:text-civix-sandal">Target Authority *</Label>
             <Input
-              value={option}
-              onChange={(e) => handleOptionChange(index, e.target.value)}
-              placeholder={`Option ${index + 1}`}
+              id="targetAuthority"
+              value={formData.targetAuthority}
+              onChange={(e) => setFormData(prev => ({ ...prev, targetAuthority: e.target.value }))}
+              placeholder="Enter target authority"
+              className="border-civix-warm-beige dark:border-gray-600"
               required
             />
-            {formData.options.length > 2 && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => handleRemoveOption(index)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
           </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleAddOption}
-          className="w-full"
-        >
-          <Plus className="h-4 w-4 mr-2" /> Add Option
-        </Button>
-      </div>
+        </div>
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Creating...' : 'Create Poll'}
-        </Button>
-      </div>
-    </form>
+        <div className="space-y-2">
+          <Label className="text-civix-dark-brown dark:text-civix-sandal">Options</Label>
+          {formData.options.map((option, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Input
+                value={option}
+                onChange={(e) => handleOptionChange(index, e.target.value)}
+                placeholder={`Option ${index + 1}`}
+                className="mt-1"
+                required
+              />
+              {formData.options.length > 2 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveOption(index)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAddOption}
+            className="w-full mt-2"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Add Option
+          </Button>
+        </div>
+
+        <div className="flex justify-end gap-2 sticky bottom-0 bg-gradient-to-t from-civix-warm-beige to-civix-sandal/80 dark:from-gray-800 dark:to-gray-800/80 pt-4 -mx-4 px-4 pb-4 border-t border-civix-warm-beige dark:border-gray-700">
+          <Button type="button" variant="outline" onClick={onClose} className="min-w-[120px] border-civix-warm-beige dark:border-gray-600">
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading} className="min-w-[120px] bg-gradient-to-r from-civix-dark-brown to-civix-civic-green text-white">
+            {loading ? 'Creating...' : 'Create Poll'}
+          </Button>
+        </div>
+      </form>
+
+      {/* Map modal dialog */}
+      <Dialog open={showMapModal} onOpenChange={setShowMapModal}>
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] flex flex-col bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle>Choose Location on Map</DialogTitle>
+            <DialogDescription>Click on the map to select a location for your poll</DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <div style={{ height: '400px', width: '100%' }}>
+              <MapContainer center={[9.0820, 8.6753]} zoom={5} style={{ height: '100%', width: '100%' }}>
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <MapClickHandler />
+                {latitude != null && longitude != null && (
+                  <Marker position={[latitude, longitude]} icon={L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41] })} />
+                )}
+              </MapContainer>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={() => { setLatitude(null); setLongitude(null); setFormData(prev => ({ ...prev, target_location: '' })); }}>
+              Clear
+            </Button>
+            <Button type="button" onClick={() => setShowMapModal(false)} className="bg-civix-civic-green hover:bg-civix-civic-green/90">
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

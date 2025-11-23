@@ -244,6 +244,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, userName, u
     }
   };
 
+  const handleResolveComplaint = async () => {
+    if (!detailsComplaint) {
+      toast.error("No complaint selected");
+      return;
+    }
+    try {
+      setResolving(true);
+      // @ts-ignore
+      const { updateComplaintStatus } = await import("@/lib/api").then((mod) => mod.complaintsAPI);
+      await updateComplaintStatus(detailsComplaint._id, { status: "resolved" });
+      toast.success("Complaint resolved successfully!");
+      setViewDetailsDialogOpen(false);
+      setDetailsComplaint(null);
+      loadComplaints();
+    } catch (error: any) {
+      console.error("Error resolving complaint:", error);
+      toast.error(error?.response?.data?.message || "Failed to resolve complaint. Please try again.");
+    } finally {
+      setResolving(false);
+    }
+  };
+
   const handleVotePoll = async (pollId: string) => {
     try {
       const poll = polls.find((p) => p._id === pollId);
@@ -1693,10 +1715,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, userName, u
               )}
             </div>
           )}
-          <DialogFooter>
-            <Button type="button" onClick={() => setViewDetailsDialogOpen(false)} className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white">
+          <DialogFooter className="flex gap-2 justify-end">
+            <Button 
+              type="button" 
+              onClick={() => setViewDetailsDialogOpen(false)} 
+              variant="outline"
+            >
               Close
             </Button>
+            {detailsComplaint && detailsComplaint.status !== "resolved" && (
+              <Button
+                type="button"
+                onClick={handleResolveComplaint}
+                disabled={resolving}
+                className="bg-civix-civic-green hover:bg-civix-civic-green/90 text-white"
+              >
+                {resolving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Resolving...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Resolve Complaint
+                  </>
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

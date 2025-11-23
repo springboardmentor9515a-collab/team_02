@@ -30,7 +30,7 @@ export default function LoginPage({ onNavigate, onLogin }: LoginPageProps) {
             if (res?.token) {
                 setAuthToken(res.token);
                 const user = {
-                    fullName: res.user?.fullName || '',
+                    fullName:  '',
                     email: res.user?.email || email,
                     token: res.token,
                 };
@@ -117,19 +117,7 @@ export default function LoginPage({ onNavigate, onLogin }: LoginPageProps) {
                             
                             <CardContent>
                                 <form onSubmit={handleSubmit} className="space-y-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="fullName" className="text-civix-dark-brown">Full Name</Label>
-                                        <Input
-                                            id="fullName"
-                                            name="fullName"
-                                            type="text"
-                                            placeholder="Enter your full name"
-                                            value={fullName}
-                                            onChange={(e) => setFullName(e.target.value)}
-                                            className="border-civix-warm-beige focus:border-civix-civic-green focus:ring-civix-civic-green"
-                                            required
-                                        />
-                                    </div>
+                                   
                                     <div className="space-y-2">
                                         <Label htmlFor="email" className="text-civix-dark-brown">Email Address</Label>
                                         <Input
